@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Loader2, Camera } from 'lucide-react';
-import { User as FirebaseUser } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
 import { updateProfile } from 'firebase/auth';
 
@@ -33,8 +33,6 @@ export function UserProfile() {
     setUploading(true);
 
     try {
-      // Aqui você implementaria o upload para o Cloudinary
-      // e atualizaria a foto do perfil no Firebase
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', 'news-web');
@@ -50,11 +48,15 @@ export function UserProfile() {
       const data = await response.json();
 
       if (data.secure_url) {
-        await updateProfile(user as FirebaseUser, {
-          photoURL: data.secure_url,
-        });
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
 
-        toast.success('Foto atualizada com sucesso!');
+        if (currentUser) {
+          await updateProfile(currentUser, {
+            photoURL: data.secure_url,
+          });
+          toast.success('Foto atualizada com sucesso!');
+        }
       }
     } catch (error) {
       console.error('Erro ao atualizar foto:', error);
@@ -70,12 +72,16 @@ export function UserProfile() {
     setSaving(true);
 
     try {
-      await updateProfile(user as FirebaseUser, {
-        displayName: displayName.trim(),
-      });
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
 
-      toast.success('Perfil atualizado com sucesso!');
-      setIsEditing(false);
+      if (currentUser) {
+        await updateProfile(currentUser, {
+          displayName: displayName.trim(),
+        });
+        toast.success('Perfil atualizado com sucesso!');
+        setIsEditing(false);
+      }
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
       toast.error('Erro ao atualizar perfil');

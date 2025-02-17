@@ -1,16 +1,7 @@
 import { Metadata } from 'next';
 import { Category } from '@/types';
 
-interface CategoryLayoutProps {
-  children: React.ReactNode;
-  params: {
-    categoria: string;
-  };
-}
-
-export async function generateMetadata({
-  params,
-}: CategoryLayoutProps): Promise<Metadata> {
+export async function generateMetadata({ params }: any): Promise<Metadata> {
   const categoria = params.categoria as Category;
 
   return {
@@ -19,6 +10,10 @@ export async function generateMetadata({
   };
 }
 
-export default function CategoryLayout({ children }: CategoryLayoutProps) {
+export default function CategoryLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

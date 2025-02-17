@@ -16,7 +16,6 @@ import {
   Loader2,
   LayoutDashboard,
   Check,
-  X,
 } from 'lucide-react';
 import { useNewsletter } from '@/hooks/useNewsletter';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -252,37 +251,33 @@ export function UserMenu() {
                     <LayoutDashboard className="h-4 w-4" />
                     Painel Admin
                   </Link>
-                  <hr className="my-1 border-secondary-200 dark:border-secondary-800" />
+                  <hr className="border-secondary-200 dark:border-secondary-800" />
                 </>
               )}
-
-              <Link
-                href="/perfil"
-                className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-900"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <User className="h-4 w-4" />
-                Meu Perfil
-              </Link>
-
               <Link
                 href="/perfil/biblioteca"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-900"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Bookmark className="h-4 w-4" />
-                Salvos
+                Biblioteca
               </Link>
-
               <Link
-                href="/perfil/biblioteca#historico"
+                href="/perfil/historico"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-900"
                 onClick={() => setIsMenuOpen(false)}
               >
                 <History className="h-4 w-4" />
                 Histórico
               </Link>
-
+              <Link
+                href="/perfil/notificacoes"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-900"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Bell className="h-4 w-4" />
+                Notificações
+              </Link>
               <Link
                 href="/perfil/preferencias"
                 className="flex items-center gap-2 px-4 py-2 text-sm text-secondary-700 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-900"
@@ -291,13 +286,11 @@ export function UserMenu() {
                 <Settings className="h-4 w-4" />
                 Preferências
               </Link>
-
-              <hr className="my-1 border-secondary-200 dark:border-secondary-800" />
-
+              <hr className="border-secondary-200 dark:border-secondary-800" />
               <button
                 onClick={() => {
-                  setIsMenuOpen(false);
                   logout();
+                  setIsMenuOpen(false);
                 }}
                 className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-secondary-100 dark:text-red-400 dark:hover:bg-secondary-900"
               >

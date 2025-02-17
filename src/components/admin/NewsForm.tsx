@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { Category } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Loader2, Upload } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { toast } from 'react-hot-toast';
 import { slugify } from '@/lib/utils';
@@ -27,6 +27,26 @@ interface NewsFormProps {
   newsId?: string;
 }
 
+type NewsData = {
+  title: string;
+  summary: string;
+  content: string;
+  category: Category;
+  published: boolean;
+  slug: string;
+  imageUrl: string;
+  author: {
+    id: string;
+    name: string;
+    photoURL: string;
+  };
+  updatedAt: Date;
+  createdAt?: Date;
+  likes?: number;
+  views?: number;
+  [key: string]: any;
+};
+
 export function NewsForm({ newsId }: NewsFormProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -39,7 +59,35 @@ export function NewsForm({ newsId }: NewsFormProps) {
     content: '',
     category: categories[0],
     published: false,
+    imageUrl: '',
   });
+
+  useEffect(() => {
+    if (newsId) {
+      const fetchNews = async () => {
+        try {
+          const newsDoc = await getDoc(doc(db, 'news', newsId));
+          if (newsDoc.exists()) {
+            const newsData = newsDoc.data();
+            setFormData({
+              title: newsData.title,
+              summary: newsData.summary,
+              content: newsData.content,
+              category: newsData.category,
+              published: newsData.published,
+              imageUrl: newsData.imageUrl,
+            });
+            setImagePreview(newsData.imageUrl);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar notícia:', error);
+          toast.error('Erro ao carregar dados da notícia');
+        }
+      };
+
+      fetchNews();
+    }
+  }, [newsId]);
 
   if (!user) {
     return (
@@ -66,7 +114,8 @@ export function NewsForm({ newsId }: NewsFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!imageFile) {
+
+    if (!imageFile && !formData.imageUrl) {
       toast.error('Selecione uma imagem para a notícia');
       return;
     }
@@ -79,70 +128,82 @@ export function NewsForm({ newsId }: NewsFormProps) {
     setLoading(true);
 
     try {
-      // Upload da imagem para o Cloudinary
-      const imageFormData = new FormData();
-      imageFormData.append('file', imageFile);
-      imageFormData.append('upload_preset', 'news-web');
-      imageFormData.append(
-        'cloud_name',
-        process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || ''
-      );
+      let imageUrl = formData.imageUrl;
 
-      console.log('Iniciando upload para o Cloudinary...');
-      const response = await fetch(
-        'https://api.cloudinary.com/v1_1/' +
-          process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME +
-          '/image/upload',
-        {
-          method: 'POST',
-          body: imageFormData,
+      if (imageFile) {
+        // Upload da imagem para o Cloudinary
+        const imageFormData = new FormData();
+        imageFormData.append('file', imageFile);
+        imageFormData.append('upload_preset', 'news-web');
+        imageFormData.append(
+          'cloud_name',
+          process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || ''
+        );
+
+        console.log('Iniciando upload para o Cloudinary...');
+        const response = await fetch(
+          'https://api.cloudinary.com/v1_1/' +
+            process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME +
+            '/image/upload',
+          {
+            method: 'POST',
+            body: imageFormData,
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Erro do Cloudinary:', errorData);
+          throw new Error(
+            `Erro ao fazer upload da imagem: ${errorData.error?.message || response.statusText}`
+          );
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Erro do Cloudinary:', errorData);
-        throw new Error(
-          `Erro ao fazer upload da imagem: ${errorData.error?.message || response.statusText}`
-        );
+        const data = await response.json();
+        console.log('Resposta do Cloudinary:', data);
+
+        if (!data.secure_url) {
+          throw new Error(
+            'URL da imagem não encontrada na resposta do Cloudinary'
+          );
+        }
+
+        imageUrl = data.secure_url;
       }
 
-      const data = await response.json();
-      console.log('Resposta do Cloudinary:', data);
-
-      if (!data.secure_url) {
-        throw new Error(
-          'URL da imagem não encontrada na resposta do Cloudinary'
-        );
-      }
-
-      // Criar a notícia no Firestore
-      const newsData = {
+      const newsData: NewsData = {
         title: formData.title,
         summary: formData.summary,
         content: formData.content,
         category: formData.category,
         published: formData.published,
         slug: slugify(formData.title),
-        imageUrl: data.secure_url,
+        imageUrl,
         author: {
           id: user.id,
           name: user.name || 'Usuário Anônimo',
           photoURL: user.photoURL || '/images/avatar-placeholder.png',
         },
-        createdAt: new Date(),
         updatedAt: new Date(),
-        likes: 0,
-        views: 0,
       };
 
-      await addDoc(collection(db, 'news'), newsData);
+      if (newsId) {
+        // Atualizar notícia existente
+        await updateDoc(doc(db, 'news', newsId), newsData);
+        toast.success('Notícia atualizada com sucesso!');
+      } else {
+        // Criar nova notícia
+        newsData.createdAt = new Date();
+        newsData.likes = 0;
+        newsData.views = 0;
+        await addDoc(collection(db, 'news'), newsData);
+        toast.success('Notícia criada com sucesso!');
+      }
 
-      toast.success('Notícia criada com sucesso!');
       router.push('/admin');
     } catch (error) {
-      console.error('Erro ao criar notícia:', error);
-      toast.error('Erro ao criar notícia');
+      console.error('Erro ao salvar notícia:', error);
+      toast.error('Erro ao salvar notícia');
     } finally {
       setLoading(false);
     }
@@ -235,6 +296,24 @@ export function NewsForm({ newsId }: NewsFormProps) {
 
       <div>
         <label
+          htmlFor="published"
+          className="mb-2 flex items-center gap-2 text-sm font-medium text-secondary-900 dark:text-secondary-100"
+        >
+          <input
+            type="checkbox"
+            id="published"
+            checked={formData.published}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, published: e.target.checked }))
+            }
+            className="h-4 w-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-600 dark:border-secondary-600"
+          />
+          Publicar imediatamente
+        </label>
+      </div>
+
+      <div>
+        <label
           htmlFor="image"
           className="mb-2 block text-sm font-medium text-secondary-900 dark:text-secondary-100"
         >
@@ -242,72 +321,43 @@ export function NewsForm({ newsId }: NewsFormProps) {
         </label>
         <div className="flex items-center gap-4">
           <label className="flex h-32 w-32 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-secondary-200 hover:border-primary-600 dark:border-secondary-800">
-            <div className="flex flex-col items-center">
-              <Upload className="mb-2 h-6 w-6 text-secondary-500" />
-              <span className="text-xs text-secondary-500">
-                Clique para selecionar
-              </span>
-            </div>
             <input
               type="file"
               id="image"
-              className="hidden"
               accept="image/*"
               onChange={handleImageChange}
-              required
+              className="hidden"
             />
-          </label>
-          {imagePreview && (
-            <div className="relative h-32 w-32 overflow-hidden rounded-lg">
+            {imagePreview ? (
               <Image
                 src={imagePreview}
                 alt="Preview"
-                fill
-                className="object-cover"
+                width={128}
+                height={128}
+                className="h-full w-full rounded-lg object-cover"
               />
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col items-center">
+                <Upload className="mb-2 h-6 w-6 text-secondary-500" />
+                <span className="text-xs text-secondary-500">
+                  Clique para selecionar
+                </span>
+              </div>
+            )}
+          </label>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="published"
-          checked={formData.published}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, published: e.target.checked }))
-          }
-          className="h-4 w-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-600 dark:border-secondary-700"
-        />
-        <label
-          htmlFor="published"
-          className="text-sm font-medium text-secondary-900 dark:text-secondary-100"
-        >
-          Publicar imediatamente
-        </label>
-      </div>
-
-      <div className="flex justify-end gap-4">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => router.push('/admin')}
-          disabled={loading}
-        >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            'Salvar'
-          )}
-        </Button>
-      </div>
+      <Button type="submit" disabled={loading}>
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Salvando...
+          </>
+        ) : (
+          'Salvar'
+        )}
+      </Button>
     </form>
   );
 }

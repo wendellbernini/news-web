@@ -122,7 +122,7 @@ export const useNews = () => {
 
       setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
-      setNews((prevNews: News[]) => [...prevNews, ...moreNews]);
+      setNews([...news, ...moreNews]);
     } catch (error) {
       console.error('Erro ao buscar mais notícias:', error);
       toast.error('Erro ao carregar mais notícias');

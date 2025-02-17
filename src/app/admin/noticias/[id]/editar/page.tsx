@@ -3,22 +3,12 @@ import { RootLayout } from '@/components/layout/RootLayout';
 import { NewsForm } from '@/components/admin/NewsForm';
 import { unstable_noStore as noStore } from 'next/cache';
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
 export const metadata: Metadata = {
   title: 'Editar Notícia | NewsWeb',
   description: 'Edite uma notícia existente',
 };
 
-export default async function EditNewsPage({
-  params,
-  searchParams,
-}: PageProps) {
+export default async function EditNewsPage(props: any) {
   noStore();
 
   return (
@@ -30,7 +20,7 @@ export default async function EditNewsPage({
             Edite uma notícia existente
           </p>
         </div>
-        <NewsForm newsId={params.id} />
+        <NewsForm newsId={props.params.id} />
       </div>
     </RootLayout>
   );

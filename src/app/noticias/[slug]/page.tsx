@@ -7,12 +7,6 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { unstable_noStore as noStore } from 'next/cache';
 
-interface NewsPageProps {
-  params: {
-    slug: string;
-  };
-}
-
 // Função assíncrona para pegar os dados da notícia
 async function getNewsData(slug: string) {
   noStore();
@@ -21,37 +15,9 @@ async function getNewsData(slug: string) {
   return !snapshot.empty ? snapshot.docs[0].data() : null;
 }
 
-// Função assíncrona para gerar o conteúdo da página
-export async function NewsContent({
-  params,
-}: {
-  params: NewsPageProps['params'];
-}) {
-  // Espera os parâmetros de forma assíncrona
-  const { slug } = await params; // Aguarde params
-
-  const news = await getNewsData(slug);
-
-  if (!news) {
-    return <div>Notícia não encontrada</div>;
-  }
-
-  return (
-    <>
-      <NewsDetail slug={slug} />
-      <CommentSection newsSlug={slug} />
-    </>
-  );
-}
-
 // Função assíncrona para gerar os metadados
-export async function generateMetadata({
-  params,
-}: NewsPageProps): Promise<Metadata> {
-  // Espera os parâmetros de forma assíncrona
-  const { slug } = await params; // Aguarde params
-
-  const news = await getNewsData(slug);
+export async function generateMetadata(props: any): Promise<Metadata> {
+  const news = await getNewsData(props.params.slug);
 
   return {
     title: news
@@ -69,15 +35,25 @@ export async function generateMetadata({
 }
 
 // Função principal que renderiza a página
-export default async function NewsPage({ params }: NewsPageProps) {
-  // Espera os parâmetros de forma assíncrona
-  const { slug } = await params; // Aguarde params
+export default async function NewsPage(props: any) {
+  const news = await getNewsData(props.params.slug);
+
+  if (!news) {
+    return (
+      <RootLayout>
+        <div className="container py-8">
+          <div>Notícia não encontrada</div>
+        </div>
+      </RootLayout>
+    );
+  }
 
   return (
     <RootLayout>
       <div className="container py-8">
         <Suspense fallback={<div>Carregando...</div>}>
-          <NewsContent params={{ slug }} />
+          <NewsDetail slug={props.params.slug} />
+          <CommentSection newsSlug={props.params.slug} />
         </Suspense>
       </div>
     </RootLayout>

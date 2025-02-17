@@ -4,13 +4,7 @@ import { RootLayout } from '@/components/layout/RootLayout';
 import { CategoryNews } from '@/components/news/CategoryNews';
 import { Category } from '@/types';
 
-interface CategoryPageProps {
-  params: {
-    categoria: string;
-  };
-}
-
-export default function CategoryPage({ params }: CategoryPageProps) {
+export default function CategoryPage({ params }: any) {
   const categoria = params.categoria as Category;
 
   return (
