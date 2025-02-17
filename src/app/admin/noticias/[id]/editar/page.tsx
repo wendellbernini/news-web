@@ -7,14 +7,23 @@ interface EditNewsPageProps {
   params: {
     id: string;
   };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export const metadata: Metadata = {
-  title: 'Editar Notícia | NewsWeb',
-  description: 'Edite uma notícia existente',
-};
+export async function generateMetadata({
+  params,
+}: EditNewsPageProps): Promise<Metadata> {
+  noStore();
+  return {
+    title: 'Editar Notícia | NewsWeb',
+    description: 'Edite uma notícia existente',
+  };
+}
 
-export default async function EditNewsPage({ params }: EditNewsPageProps) {
+export default async function EditNewsPage({
+  params,
+  searchParams,
+}: EditNewsPageProps) {
   noStore();
 
   return (
