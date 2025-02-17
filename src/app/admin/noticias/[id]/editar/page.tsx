@@ -1,14 +1,22 @@
 import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { NewsForm } from '@/components/admin/NewsForm';
-import { PageProps } from 'next'; // Importe a tipagem correta
+import { unstable_noStore as noStore } from 'next/cache';
+
+interface EditNewsPageProps {
+  params: {
+    id: string;
+  };
+}
 
 export const metadata: Metadata = {
   title: 'Editar Notícia | NewsWeb',
   description: 'Edite uma notícia existente',
 };
 
-export default function EditNewsPage({ params }: PageProps) {
+export default async function EditNewsPage({ params }: EditNewsPageProps) {
+  noStore();
+
   return (
     <RootLayout>
       <div className="container py-8">
