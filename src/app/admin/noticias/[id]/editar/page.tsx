@@ -2,14 +2,18 @@
 
 import { RootLayout } from '@/components/layout/RootLayout';
 import { NewsForm } from '@/components/admin/NewsForm';
+import { unstable_noStore as noStore } from 'next/cache';
 
 interface EditNewsPageProps {
   params: {
     id: string;
   };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
 export default function EditNewsPage({ params }: EditNewsPageProps) {
+  noStore();
+
   return (
     <RootLayout>
       <div className="container py-8">
