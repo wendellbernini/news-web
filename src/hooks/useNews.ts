@@ -26,7 +26,9 @@ export const useNews = () => {
   const [lastDoc, setLastDoc] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(true);
   const {
+    news,
     setNews,
     addNews: addNewsToStore,
     updateNews: updateNewsInStore,
@@ -224,6 +226,8 @@ export const useNews = () => {
   };
 
   return {
+    news,
+    loading,
     fetchNews,
     fetchMoreNews,
     getNewsById,

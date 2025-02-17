@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useNews } from '@/hooks/useNews';
 import { NewsCard } from '@/components/news/NewsCard';
 import { Loader2, Search, X } from 'lucide-react';
+import { News } from '@/types';
 
 export function SearchDialog() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const { searchNews, news: results, loading } = useNews();
@@ -36,6 +35,24 @@ export function SearchDialog() {
       return () => clearTimeout(debounce);
     }
   }, [query, searchNews]);
+
+  const handleShare = async (news: News) => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: news.title,
+          text: news.summary,
+          url: `${window.location.origin}/noticias/${news.slug}`,
+        });
+      } catch (error) {
+        console.error('Erro ao compartilhar:', error);
+      }
+    } else {
+      // Fallback para copiar o link
+      const url = `${window.location.origin}/noticias/${news.slug}`;
+      navigator.clipboard.writeText(url);
+    }
+  };
 
   return (
     <>
@@ -91,7 +108,7 @@ export function SearchDialog() {
                     <NewsCard
                       key={news.id}
                       news={news}
-                      onShare={() => {}}
+                      onShare={handleShare}
                       onLike={() => {}}
                     />
                   ))}

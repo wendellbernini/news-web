@@ -5,6 +5,12 @@ export type User = {
   photoURL?: string;
   role: 'user' | 'admin';
   createdAt: Date;
+  displayName?: string;
+  uid?: string;
+  metadata?: {
+    creationTime?: string;
+    lastSignInTime?: string;
+  };
 };
 
 export type News = {
@@ -25,6 +31,7 @@ export type News = {
   createdAt: Date;
   updatedAt: Date;
   published: boolean;
+  readTime?: number;
 };
 
 export type Comment = {

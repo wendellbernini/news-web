@@ -23,7 +23,11 @@ const categories: Category[] = [
   'Ciência',
 ];
 
-export function NewsForm() {
+interface NewsFormProps {
+  newsId?: string;
+}
+
+export function NewsForm({ newsId }: NewsFormProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { NewsCard } from './NewsCard';
 import { useNews } from '@/hooks/useNews';
-import { Category } from '@/types';
+import { Category, News } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Loader2 } from 'lucide-react';
 
@@ -31,7 +31,7 @@ export function CategoryNews({ category }: CategoryNewsProps) {
     console.log('Curtir notícia:', newsId);
   };
 
-  const handleShare = async (news: any) => {
+  const handleShare = async (news: News) => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -52,7 +52,7 @@ export function CategoryNews({ category }: CategoryNewsProps) {
   return (
     <div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {news.map((item) => (
+        {news.map((item: News) => (
           <NewsCard
             key={item.id}
             news={item}
