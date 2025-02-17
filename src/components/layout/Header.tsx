@@ -7,12 +7,15 @@ import { Input } from '@/components/ui/Input';
 import useStore from '@/store/useStore';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { UserMenu } from '@/components/user/UserMenu';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useStore();
   const { signInWithGoogle, logout } = useAuth();
+
+  console.log('Header rendering, user:', user); // Debug log
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,20 +59,7 @@ export function Header() {
           >
             Mais Lidas
           </Link>
-          {user ? (
-            <>
-              {user.role === 'admin' && (
-                <Link href="/admin">
-                  <Button variant="ghost">Painel Admin</Button>
-                </Link>
-              )}
-              <Button variant="ghost" onClick={logout}>
-                Sair
-              </Button>
-            </>
-          ) : (
-            <Button onClick={signInWithGoogle}>Entrar</Button>
-          )}
+          <UserMenu />
         </nav>
 
         <Button

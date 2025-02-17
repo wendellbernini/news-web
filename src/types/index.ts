@@ -11,6 +11,36 @@ export type User = {
     creationTime?: string;
     lastSignInTime?: string;
   };
+  preferences: UserPreferences;
+  savedNews: string[];
+  readHistory: ReadHistoryItem[];
+  newsletter: NewsletterPreferences;
+  pushNotifications: PushNotificationPreferences;
+};
+
+export type UserPreferences = {
+  categories: Category[];
+  darkMode: boolean;
+  emailNotifications: boolean;
+};
+
+export type ReadHistoryItem = {
+  newsId: string;
+  readAt: Date;
+  progress?: number;
+};
+
+export type NewsletterPreferences = {
+  subscribed: boolean;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  categories: Category[];
+};
+
+export type PushNotificationPreferences = {
+  enabled: boolean;
+  categories: Category[];
+  breakingNews: boolean;
+  newArticles: boolean;
 };
 
 export type News = {
@@ -32,6 +62,7 @@ export type News = {
   updatedAt: Date;
   published: boolean;
   readTime?: number;
+  isBreakingNews?: boolean;
 };
 
 export type Comment = {

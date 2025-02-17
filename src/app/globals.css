@@ -70,10 +70,25 @@
   }
 }
 
+@keyframes slide-left {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
 }
 
 .animate-slide-up {
   animation: slide-up 0.5s ease-out;
+}
+
+.animate-slide-left {
+  animation: slide-left 20s linear infinite;
+  padding-left: 100%;
+  padding-right: 2rem;
 }

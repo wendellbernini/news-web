@@ -7,8 +7,8 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
-  createUserWithEmailAndPassword,
   User as FirebaseUser,
+  createUserWithEmailAndPassword,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
@@ -22,6 +22,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      console.log('Auth state changed:', firebaseUser);
       if (firebaseUser) {
         try {
           // Obtém o token do usuário
@@ -30,12 +31,16 @@ export const useAuth = () => {
           document.cookie = `firebase-token=${token}; path=/`;
 
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          console.log('User doc exists:', userDoc.exists());
           if (userDoc.exists()) {
             const userData = userDoc.data() as User;
+            console.log('User data from Firestore:', userData);
             setUser(userData);
           } else {
             // Se o documento não existir, cria um novo
+            console.log('Creating new user profile...');
             const userData = await createUserProfile(firebaseUser);
+            console.log('New user profile created:', userData);
             setUser(userData);
           }
         } catch (error) {
@@ -57,32 +62,62 @@ export const useAuth = () => {
     return () => unsubscribe();
   }, [setUser]);
 
-  const createUserProfile = async (firebaseUser: FirebaseUser) => {
+  const createUserProfile = async (
+    firebaseUser: FirebaseUser
+  ): Promise<User> => {
+    console.log('Creating user profile for:', firebaseUser);
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userData: User = {
       id: firebaseUser.uid,
       name: firebaseUser.displayName || 'Usuário',
       email: firebaseUser.email || '',
-      photoURL: firebaseUser.photoURL || undefined,
+      photoURL: firebaseUser.photoURL || '/images/avatar-placeholder.png',
       role: 'user',
       createdAt: new Date(),
+      preferences: {
+        categories: [],
+        darkMode: false,
+        emailNotifications: true,
+      },
+      savedNews: [],
+      readHistory: [],
+      newsletter: {
+        subscribed: false,
+        frequency: 'weekly',
+        categories: [],
+      },
+      pushNotifications: {
+        enabled: false,
+        categories: [],
+        breakingNews: true,
+        newArticles: true,
+      },
     };
 
     await setDoc(userRef, userData);
+    console.log('User profile saved:', userData);
     return userData;
   };
 
   const signInWithGoogle = async () => {
     try {
+      console.log('Starting Google sign in...');
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
+      console.log('Google sign in result:', result);
+
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
+      console.log('User doc exists:', userDoc.exists());
 
       if (!userDoc.exists()) {
+        console.log('Creating new user profile...');
         const userData = await createUserProfile(result.user);
+        console.log('New user profile created:', userData);
         setUser(userData);
       } else {
-        setUser(userDoc.data() as User);
+        const userData = userDoc.data() as User;
+        console.log('Existing user data:', userData);
+        setUser(userData);
       }
 
       // Obtém e salva o token após o login
@@ -127,15 +162,11 @@ export const useAuth = () => {
         email,
         password
       );
-      const userData: User = {
-        id: result.user.uid,
-        name,
-        email,
-        role: 'user',
-        createdAt: new Date(),
-      };
+      const userData = await createUserProfile({
+        ...result.user,
+        displayName: name,
+      });
 
-      await setDoc(doc(db, 'users', result.user.uid), userData);
       setUser(userData);
 
       // Obtém e salva o token após o cadastro

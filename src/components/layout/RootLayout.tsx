@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { NewsTicker } from './NewsTicker';
 import { Toaster } from 'react-hot-toast';
 import useStore from '@/store/useStore';
 
@@ -11,7 +12,11 @@ interface RootLayoutProps {
 }
 
 export function RootLayout({ children }: RootLayoutProps) {
-  const { isDarkMode } = useStore();
+  const { isDarkMode, user } = useStore();
+
+  useEffect(() => {
+    console.log('RootLayout mounted, user:', user); // Debug log
+  }, [user]);
 
   return (
     <div className={isDarkMode ? 'dark' : ''} suppressHydrationWarning>
@@ -19,6 +24,7 @@ export function RootLayout({ children }: RootLayoutProps) {
         className="flex min-h-screen flex-col bg-white text-secondary-950 antialiased dark:bg-secondary-950 dark:text-secondary-50"
         suppressHydrationWarning
       >
+        <NewsTicker />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
