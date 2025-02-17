@@ -36,6 +36,7 @@ export const useNews = () => {
   } = useStore();
 
   const fetchNews = async (category?: Category) => {
+    setLoading(true);
     try {
       let newsQuery = query(
         collection(db, 'news'),
@@ -75,12 +76,15 @@ export const useNews = () => {
     } catch (error) {
       console.error('Erro ao buscar notícias:', error);
       toast.error('Erro ao carregar notícias');
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchMoreNews = async (category?: Category) => {
     if (!lastDoc) return;
 
+    setLoading(true);
     try {
       let newsQuery = query(
         collection(db, 'news'),
@@ -118,10 +122,12 @@ export const useNews = () => {
 
       setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
       setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
-      setNews((prevNews: News[]) => [...prevNews, ...moreNews] as News[]);
+      setNews((prevNews: News[]) => [...prevNews, ...moreNews]);
     } catch (error) {
       console.error('Erro ao buscar mais notícias:', error);
       toast.error('Erro ao carregar mais notícias');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -187,6 +193,7 @@ export const useNews = () => {
   };
 
   const searchNews = async (searchQuery: string) => {
+    setLoading(true);
     try {
       // Nota: Esta é uma implementação básica de busca.
       // Para uma busca mais robusta, considere usar Algolia ou ElasticSearch
@@ -222,6 +229,8 @@ export const useNews = () => {
     } catch (error) {
       console.error('Erro ao buscar notícias:', error);
       toast.error('Erro ao buscar notícias');
+    } finally {
+      setLoading(false);
     }
   };
 

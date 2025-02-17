@@ -12,11 +12,9 @@ interface NewsPageProps {
 export async function generateMetadata({
   params,
 }: NewsPageProps): Promise<Metadata> {
-  // Na implementação real, buscaríamos os dados da notícia
-  // e retornaríamos os metadados dinâmicos
   return {
-    title: 'Título da Notícia | NewsWeb',
-    description: 'Descrição da notícia',
+    title: `${params.slug} | NewsWeb`,
+    description: 'Detalhes da notícia',
   };
 }
 

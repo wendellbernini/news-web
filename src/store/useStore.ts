@@ -12,7 +12,7 @@ interface StoreState {
 
   // News
   news: News[];
-  setNews: (news: News[]) => void;
+  setNews: (news: News[] | ((prevNews: News[]) => News[])) => void;
   addNews: (news: News) => void;
   updateNews: (news: News) => void;
   deleteNews: (newsId: string) => void;

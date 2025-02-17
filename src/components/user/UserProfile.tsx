@@ -5,13 +5,14 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Loader2, Camera } from 'lucide-react';
-import { updateProfile } from 'firebase/auth';
+import { User as FirebaseUser } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
+import { updateProfile } from 'firebase/auth';
 
 export function UserProfile() {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [displayName, setDisplayName] = useState(user?.name || '');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -49,7 +50,7 @@ export function UserProfile() {
       const data = await response.json();
 
       if (data.secure_url) {
-        await updateProfile(user, {
+        await updateProfile(user as FirebaseUser, {
           photoURL: data.secure_url,
         });
 
@@ -69,7 +70,7 @@ export function UserProfile() {
     setSaving(true);
 
     try {
-      await updateProfile(user, {
+      await updateProfile(user as FirebaseUser, {
         displayName: displayName.trim(),
       });
 
@@ -89,7 +90,7 @@ export function UserProfile() {
         <div className="relative mx-auto mb-4 h-24 w-24">
           <Image
             src={user.photoURL || '/images/avatar-placeholder.png'}
-            alt={user.displayName || 'Avatar'}
+            alt={user.name || 'Avatar'}
             fill
             className="rounded-full object-cover"
           />
@@ -127,7 +128,7 @@ export function UserProfile() {
                 variant="ghost"
                 onClick={() => {
                   setIsEditing(false);
-                  setDisplayName(user.displayName || '');
+                  setDisplayName(user.name || '');
                 }}
                 disabled={saving}
               >
@@ -148,7 +149,7 @@ export function UserProfile() {
         ) : (
           <>
             <h2 className="text-xl font-bold">
-              {user.displayName || 'Usuário Anônimo'}
+              {user.name || 'Usuário Anônimo'}
             </h2>
             <p className="text-sm text-secondary-600 dark:text-secondary-400">
               {user.email}
@@ -170,7 +171,7 @@ export function UserProfile() {
             Membro desde
           </span>
           <span>
-            {user.metadata.creationTime
+            {user.metadata?.creationTime
               ? new Date(user.metadata.creationTime).toLocaleDateString('pt-BR')
               : 'Data não disponível'}
           </span>
@@ -180,7 +181,7 @@ export function UserProfile() {
             Último acesso
           </span>
           <span>
-            {user.metadata.lastSignInTime
+            {user.metadata?.lastSignInTime
               ? new Date(user.metadata.lastSignInTime).toLocaleDateString(
                   'pt-BR'
                 )

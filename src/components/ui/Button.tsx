@@ -1,4 +1,9 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+import {
+  ButtonHTMLAttributes,
+  forwardRef,
+  ElementRef,
+  ComponentPropsWithoutRef,
+} from 'react';
 import { VariantProps, cva } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
@@ -41,7 +46,7 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = forwardRef<HTMLButtonElement | HTMLDivElement, ButtonProps>(
   (
     { className, children, variant, size, isLoading, asChild, ...props },
     ref
@@ -50,7 +55,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
+        ref={ref as any}
         disabled={isLoading}
         {...props}
       >

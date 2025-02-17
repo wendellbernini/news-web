@@ -4,8 +4,7 @@ import { adminAuth, adminDb } from '@/lib/firebase/admin';
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get('firebase-token')?.value;
+    const token = cookies().get('firebase-token')?.value;
 
     if (!token) {
       return NextResponse.json({ isAdmin: false });
