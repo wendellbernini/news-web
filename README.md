@@ -118,7 +118,7 @@ Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE.md](L
 
 ## Autor
 
-Seu Nome - [@seu-usuario](https://github.com/seu-usuario)
+Wendell Bernini - [@wendellbernini](https://github.com/wendellbernini)
 
 ## Agradecimentos
 
