@@ -112,9 +112,9 @@ src/
 4. Faça push para a branch (`git push origin feature/nova-feature`)
 5. Abra um Pull Request
 
-## Licença
+## LicençaProprietária
 
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE.md](LICENSE.md) para mais detalhes.
+Este projeto é de propriedade de web-news. Você não tem permissão para copiar, modificar, distribuir ou sublicenciar este código sem a permissão explícita do proprietário - veja o arquivo [LICENSE.md](LICENSE.md) para mais detalhes.
 
 ## Autor
 

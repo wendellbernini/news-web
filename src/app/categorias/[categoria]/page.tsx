@@ -1,34 +1,16 @@
-import { Metadata } from 'next';
+'use client';
+
 import { RootLayout } from '@/components/layout/RootLayout';
 import { CategoryNews } from '@/components/news/CategoryNews';
 import { Category } from '@/types';
-import { unstable_noStore as noStore } from 'next/cache';
 
 interface CategoryPageProps {
   params: {
     categoria: string;
   };
-  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-// Gera metadados dinâmicos com base na categoria da URL
-export async function generateMetadata({
-  params,
-}: CategoryPageProps): Promise<Metadata> {
-  noStore();
-  const categoria = params.categoria as Category;
-
-  return {
-    title: `${categoria} | NewsWeb`,
-    description: `Últimas notícias sobre ${categoria}`,
-  };
-}
-
-export default async function CategoryPage({
-  params,
-  searchParams,
-}: CategoryPageProps) {
-  noStore();
+export default function CategoryPage({ params }: CategoryPageProps) {
   const categoria = params.categoria as Category;
 
   return (

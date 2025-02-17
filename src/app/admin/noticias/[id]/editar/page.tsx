@@ -1,31 +1,15 @@
-import { Metadata } from 'next';
+'use client';
+
 import { RootLayout } from '@/components/layout/RootLayout';
 import { NewsForm } from '@/components/admin/NewsForm';
-import { unstable_noStore as noStore } from 'next/cache';
 
 interface EditNewsPageProps {
   params: {
     id: string;
   };
-  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export async function generateMetadata({
-  params,
-}: EditNewsPageProps): Promise<Metadata> {
-  noStore();
-  return {
-    title: 'Editar Notícia | NewsWeb',
-    description: 'Edite uma notícia existente',
-  };
-}
-
-export default async function EditNewsPage({
-  params,
-  searchParams,
-}: EditNewsPageProps) {
-  noStore();
-
+export default function EditNewsPage({ params }: EditNewsPageProps) {
   return (
     <RootLayout>
       <div className="container py-8">
