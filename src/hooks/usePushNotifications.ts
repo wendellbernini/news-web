@@ -7,16 +7,20 @@ import useStore from '@/store/useStore';
 export const usePushNotifications = () => {
   const [permission, setPermission] =
     useState<NotificationPermission>('default');
+  const [isSupported, setIsSupported] = useState(false);
   const { user, updatePushNotifications } = useStore();
 
   useEffect(() => {
-    if ('Notification' in window) {
+    // Verifica se as notificações são suportadas apenas no cliente
+    setIsSupported(typeof window !== 'undefined' && 'Notification' in window);
+
+    if (typeof window !== 'undefined' && 'Notification' in window) {
       setPermission(Notification.permission);
     }
   }, []);
 
   const requestPermission = async () => {
-    if (!('Notification' in window)) {
+    if (!isSupported) {
       toast.error('Seu navegador não suporta notificações push');
       return false;
     }
@@ -43,8 +47,8 @@ export const usePushNotifications = () => {
 
   const sendNotification = (title: string, options?: NotificationOptions) => {
     if (
-      !('Notification' in window) ||
-      Notification.permission !== 'granted' ||
+      !isSupported ||
+      permission !== 'granted' ||
       !user?.pushNotifications.enabled
     ) {
       return;
@@ -65,7 +69,7 @@ export const usePushNotifications = () => {
     permission,
     requestPermission,
     sendNotification,
-    isSupported: 'Notification' in window,
-    isEnabled: permission === 'granted' && user?.pushNotifications.enabled,
+    isSupported,
+    isEnabled: permission === 'granted' && user?.pushNotifications?.enabled,
   };
 };

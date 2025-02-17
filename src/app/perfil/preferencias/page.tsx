@@ -55,6 +55,20 @@ export default function PreferencesPage() {
     }
   }, [user, router]);
 
+  if (!user) {
+    return (
+      <div className="container flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-bold">Acesso Restrito</h1>
+          <p className="mb-4 text-secondary-600 dark:text-secondary-400">
+            Faça login para acessar suas preferências
+          </p>
+          <Button onClick={() => router.push('/login')}>Fazer Login</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!user || !preferences || !newsletterPrefs) {
     return null;
   }

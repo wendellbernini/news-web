@@ -2,37 +2,59 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { Loader2, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ReactMarkdown from 'react-markdown';
+import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 interface NewsDetailProps {
   slug: string;
 }
 
 export function NewsDetail({ slug }: NewsDetailProps) {
+  const router = useRouter();
   const [news, setNews] = useState<News | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchNews = async () => {
-      try {
-        const newsQuery = doc(db, 'news', slug);
-        const newsDoc = await getDoc(newsQuery);
+      if (!slug) return;
 
-        if (newsDoc.exists()) {
-          setNews({ id: newsDoc.id, ...newsDoc.data() } as News);
+      setLoading(true);
+      setError(null);
+
+      try {
+        const newsQuery = query(
+          collection(db, 'news'),
+          where('slug', '==', slug)
+        );
+        const snapshot = await getDocs(newsQuery);
+
+        if (!snapshot.empty) {
+          const newsDoc = snapshot.docs[0];
+          const data = newsDoc.data();
+          setNews({
+            id: newsDoc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date(),
+          } as News);
         } else {
           setError('Notícia não encontrada');
+          toast.error('Notícia não encontrada');
         }
       } catch (err) {
-        setError('Erro ao carregar a notícia');
         console.error('Erro ao buscar notícia:', err);
+        setError(
+          'Erro ao carregar a notícia. Por favor, tente novamente mais tarde.'
+        );
+        toast.error('Erro ao carregar a notícia');
       } finally {
         setLoading(false);
       }
@@ -40,28 +62,6 @@ export function NewsDetail({ slug }: NewsDetailProps) {
 
     fetchNews();
   }, [slug]);
-
-  const handleLike = () => {
-    // Implementar funcionalidade de curtir
-    console.log('Curtir notícia:', slug);
-  };
-
-  const handleShare = async () => {
-    if (navigator.share && news) {
-      try {
-        await navigator.share({
-          title: news.title,
-          text: news.summary,
-          url: window.location.href,
-        });
-      } catch (error) {
-        console.error('Erro ao compartilhar:', error);
-      }
-    } else {
-      // Fallback para copiar o link
-      navigator.clipboard.writeText(window.location.href);
-    }
-  };
 
   if (loading) {
     return (
@@ -73,11 +73,38 @@ export function NewsDetail({ slug }: NewsDetailProps) {
 
   if (error || !news) {
     return (
-      <div className="flex h-96 items-center justify-center">
+      <div className="flex h-96 flex-col items-center justify-center gap-4">
         <p className="text-center text-lg text-red-600">{error}</p>
+        <Button variant="outline" onClick={() => router.back()}>
+          Voltar
+        </Button>
       </div>
     );
   }
+
+  const handleLike = () => {
+    toast.success('Funcionalidade em desenvolvimento');
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: news.title,
+          text: news.summary,
+          url: window.location.href,
+        });
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Erro ao compartilhar:', error);
+          toast.error('Erro ao compartilhar');
+        }
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copiado para a área de transferência!');
+    }
+  };
 
   return (
     <article className="mx-auto max-w-4xl">
@@ -105,7 +132,7 @@ export function NewsDetail({ slug }: NewsDetailProps) {
             {formatDate(news.createdAt)}
           </time>
           <span>•</span>
-          <span>{news.readTime} min de leitura</span>
+          <span>{news.readTime || '5'} min de leitura</span>
         </div>
       </header>
 
