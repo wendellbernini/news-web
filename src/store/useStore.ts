@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { User, News, Category } from "@/types";
+import { create } from 'zustand';
+import { User, News, Category } from '@/types';
 
 interface StoreState {
   // Auth
@@ -55,7 +55,7 @@ const useStore = create<StoreState>((set) => ({
   // Filters
   selectedCategory: null,
   setSelectedCategory: (category) => set({ selectedCategory: category }),
-  searchQuery: "",
+  searchQuery: '',
   setSearchQuery: (query) => set({ searchQuery: query }),
 
   // Loading States

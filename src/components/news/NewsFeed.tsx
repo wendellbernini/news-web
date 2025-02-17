@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useInView } from "react-intersection-observer";
-import { NewsCard } from "./NewsCard";
-import { useNews } from "@/hooks/useNews";
-import useStore from "@/store/useStore";
-import { Button } from "@/components/ui/Button";
-import { Loader2 } from "lucide-react";
+import { useEffect } from 'react';
+import { useInView } from 'react-intersection-observer';
+import { NewsCard } from './NewsCard';
+import { useNews } from '@/hooks/useNews';
+import useStore from '@/store/useStore';
+import { Button } from '@/components/ui/Button';
+import { Loader2 } from 'lucide-react';
 
 export function NewsFeed() {
   const { news, selectedCategory } = useStore();
@@ -25,7 +25,7 @@ export function NewsFeed() {
 
   const handleLike = (newsId: string) => {
     // Implementar a funcionalidade de curtir
-    console.log("Curtir notícia:", newsId);
+    console.log('Curtir notícia:', newsId);
   };
 
   const handleShare = async (news: any) => {
@@ -37,7 +37,7 @@ export function NewsFeed() {
           url: `${window.location.origin}/noticias/${news.slug}`,
         });
       } catch (error) {
-        console.error("Erro ao compartilhar:", error);
+        console.error('Erro ao compartilhar:', error);
       }
     } else {
       // Fallback para copiar o link

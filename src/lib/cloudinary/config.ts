@@ -1,4 +1,4 @@
-import { v2 as cloudinary } from "cloudinary";
+import { v2 as cloudinary } from 'cloudinary';
 
 cloudinary.config({
   cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -10,7 +10,7 @@ cloudinary.config({
 export const uploadImage = async (file: File) => {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  const base64 = buffer.toString("base64");
+  const base64 = buffer.toString('base64');
   const dataURI = `data:${file.type};base64,${base64}`;
 
   try {
@@ -18,8 +18,8 @@ export const uploadImage = async (file: File) => {
       cloudinary.uploader.upload(
         dataURI,
         {
-          folder: "news",
-          resource_type: "auto",
+          folder: 'news',
+          resource_type: 'auto',
         },
         (error, result) => {
           if (error) reject(error);
@@ -30,7 +30,7 @@ export const uploadImage = async (file: File) => {
 
     return result;
   } catch (error) {
-    console.error("Erro ao fazer upload da imagem:", error);
+    console.error('Erro ao fazer upload da imagem:', error);
     throw error;
   }
 };

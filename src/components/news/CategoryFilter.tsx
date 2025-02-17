@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { Category } from "@/types";
-import useStore from "@/store/useStore";
-import { Button } from "@/components/ui/Button";
+import { Category } from '@/types';
+import useStore from '@/store/useStore';
+import { Button } from '@/components/ui/Button';
 
 const categories: Category[] = [
-  "Tecnologia",
-  "Esportes",
-  "Política",
-  "Economia",
-  "Entretenimento",
-  "Saúde",
-  "Educação",
-  "Ciência",
+  'Tecnologia',
+  'Esportes',
+  'Política',
+  'Economia',
+  'Entretenimento',
+  'Saúde',
+  'Educação',
+  'Ciência',
 ];
 
 export function CategoryFilter() {
@@ -21,7 +21,7 @@ export function CategoryFilter() {
   return (
     <div className="flex flex-wrap gap-2">
       <Button
-        variant={selectedCategory === null ? "default" : "ghost"}
+        variant={selectedCategory === null ? 'default' : 'ghost'}
         size="sm"
         onClick={() => setSelectedCategory(null)}
       >
@@ -30,7 +30,7 @@ export function CategoryFilter() {
       {categories.map((category) => (
         <Button
           key={category}
-          variant={selectedCategory === category ? "default" : "ghost"}
+          variant={selectedCategory === category ? 'default' : 'ghost'}
           size="sm"
           onClick={() => setSelectedCategory(category)}
         >

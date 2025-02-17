@@ -1,9 +1,9 @@
-import { Suspense } from "react";
-import { RootLayout } from "@/components/layout/RootLayout";
-import { NewsFeed } from "@/components/news/NewsFeed";
-import { FeaturedNews } from "@/components/news/FeaturedNews";
-import { CategoryFilter } from "@/components/news/CategoryFilter";
-import { Loader2 } from "lucide-react";
+import { Suspense } from 'react';
+import { RootLayout } from '@/components/layout/RootLayout';
+import { NewsFeed } from '@/components/news/NewsFeed';
+import { FeaturedNews } from '@/components/news/FeaturedNews';
+import { CategoryFilter } from '@/components/news/CategoryFilter';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
   return (

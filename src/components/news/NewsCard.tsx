@@ -1,8 +1,8 @@
-import Image from "next/image";
-import Link from "next/link";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
-import { News } from "@/types";
-import { Button } from "@/components/ui/Button";
+import Image from 'next/image';
+import Link from 'next/link';
+import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { News } from '@/types';
+import { Button } from '@/components/ui/Button';
 import {
   Card,
   CardContent,
@@ -10,8 +10,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/Card";
-import { formatDate, truncateText } from "@/lib/utils";
+} from '@/components/ui/Card';
+import { formatDate, truncateText } from '@/lib/utils';
 
 interface NewsCardProps {
   news: News;
@@ -47,7 +47,7 @@ export function NewsCard({ news, onLike, onShare }: NewsCardProps) {
         </Link>
         <CardDescription className="flex items-center gap-2 text-xs">
           <Image
-            src={news.author.photoURL || "/images/avatar-placeholder.png"}
+            src={news.author.photoURL || '/images/avatar-placeholder.png'}
             alt={news.author.name}
             width={24}
             height={24}
