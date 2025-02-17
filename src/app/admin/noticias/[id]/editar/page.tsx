@@ -1,17 +1,24 @@
-'use client';
-
+import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { NewsForm } from '@/components/admin/NewsForm';
 import { unstable_noStore as noStore } from 'next/cache';
 
-interface EditNewsPageProps {
+interface PageProps {
   params: {
     id: string;
   };
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export default function EditNewsPage({ params }: EditNewsPageProps) {
+export const metadata: Metadata = {
+  title: 'Editar Notícia | NewsWeb',
+  description: 'Edite uma notícia existente',
+};
+
+export default async function EditNewsPage({
+  params,
+  searchParams,
+}: PageProps) {
   noStore();
 
   return (
