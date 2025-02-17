@@ -1,0 +1,38 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# JS/TS files
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+
+# Styles
+*.css text
+*.scss text
+
+# Documentation
+*.md text
+*.txt text
+*.pdf binary
+
+# Graphics
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+# Fonts
+*.ttf binary
+*.eot binary
+*.woff binary
+*.woff2 binary
+
+# Ignore files (like .gitignore) and CI config files
+.* text
+
+# Lock files
+package-lock.json text -diff
+yarn.lock text -diff
+pnpm-lock.yaml text -diff 

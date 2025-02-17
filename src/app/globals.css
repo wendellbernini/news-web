@@ -2,20 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-secondary-100 dark:bg-secondary-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-secondary-300 hover:bg-secondary-400 dark:bg-secondary-700 dark:hover:bg-secondary-600;
+}
+
+/* Seleção de texto */
+::selection {
+  @apply bg-primary-600/20 text-primary-900 dark:bg-primary-400/20 dark:text-primary-100;
+}
+
+/* Remover outline do foco em dispositivos que não usam teclado */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Melhorar a legibilidade do texto */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Animações */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
 }

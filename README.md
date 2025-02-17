@@ -1,36 +1,128 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NewsWeb - Portal de Notícias
 
-## Getting Started
+Um portal de notícias moderno e responsivo construído com Next.js, Firebase e Cloudinary.
 
-First, run the development server:
+## Tecnologias Utilizadas
+
+- Frontend: React.js + Next.js 14
+- Estilização: Tailwind CSS
+- Backend: Firebase (Authentication, Firestore Database)
+- Armazenamento de Imagens: Cloudinary
+- Gerenciamento de Estado: Zustand
+- Autenticação: Firebase Authentication (Google, Email/Password)
+
+## Funcionalidades
+
+- Feed de notícias com paginação infinita
+- Sistema de autenticação (Google e Email/Senha)
+- Painel de administração para gerenciar notícias
+- Upload e otimização de imagens
+- Categorização de notícias
+- Sistema de comentários
+- Modo escuro
+- Design responsivo
+- SEO otimizado
+
+## Pré-requisitos
+
+- Node.js 18.17 ou superior
+- NPM ou Yarn
+- Conta no Firebase
+- Conta no Cloudinary
+
+## Instalação
+
+1. Clone o repositório:
+
+```bash
+git clone https://github.com/seu-usuario/news-web.git
+cd news-web
+```
+
+2. Instale as dependências:
+
+```bash
+npm install
+# ou
+yarn install
+```
+
+3. Configure as variáveis de ambiente:
+
+   - Copie o arquivo `.env.local.example` para `.env.local`
+   - Preencha as variáveis com suas credenciais do Firebase e Cloudinary
+
+4. Inicie o servidor de desenvolvimento:
 
 ```bash
 npm run dev
-# or
+# ou
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Acesse http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Configuração do Firebase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Crie um novo projeto no [Firebase Console](https://console.firebase.google.com)
+2. Ative o Authentication e configure os provedores:
+   - Google
+   - Email/Password
+3. Crie um banco de dados no Firestore
+4. Copie as credenciais do projeto para o arquivo `.env.local`
 
-## Learn More
+## Configuração do Cloudinary
 
-To learn more about Next.js, take a look at the following resources:
+1. Crie uma conta no [Cloudinary](https://cloudinary.com)
+2. Copie as credenciais para o arquivo `.env.local`:
+   - Cloud Name
+   - API Key
+   - API Secret
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Estrutura do Projeto
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+  ├── app/              # Páginas e rotas do Next.js
+  ├── components/       # Componentes React
+  │   ├── ui/          # Componentes de UI reutilizáveis
+  │   ├── layout/      # Componentes de layout
+  │   └── news/        # Componentes específicos de notícias
+  ├── hooks/           # Hooks personalizados
+  ├── lib/             # Configurações e utilitários
+  │   ├── firebase/    # Configuração do Firebase
+  │   └── cloudinary/  # Configuração do Cloudinary
+  ├── store/           # Gerenciamento de estado (Zustand)
+  └── types/           # Definições de tipos TypeScript
+```
 
-## Deploy on Vercel
+## Scripts Disponíveis
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `npm run dev`: Inicia o servidor de desenvolvimento
+- `npm run build`: Cria a build de produção
+- `npm run start`: Inicia o servidor de produção
+- `npm run lint`: Executa o linter
+- `npm run format`: Formata o código com Prettier
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Contribuição
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Faça commit das suas alterações (`git commit -m 'Adiciona nova feature'`)
+4. Faça push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
+
+## Licença
+
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE.md](LICENSE.md) para mais detalhes.
+
+## Autor
+
+Seu Nome - [@seu-usuario](https://github.com/seu-usuario)
+
+## Agradecimentos
+
+- [Next.js](https://nextjs.org)
+- [Firebase](https://firebase.google.com)
+- [Cloudinary](https://cloudinary.com)
+- [Tailwind CSS](https://tailwindcss.com)
