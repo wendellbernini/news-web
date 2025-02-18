@@ -24,7 +24,7 @@ export function UserLikedNews() {
 
   useEffect(() => {
     const fetchLikedNews = async () => {
-      if (!user) {
+      if (!user?.uid) {
         setLoading(false);
         return;
       }
@@ -38,10 +38,15 @@ export function UserLikedNews() {
         );
 
         const likesSnapshot = await getDocs(likesQuery);
-        const newsIds = likesSnapshot.docs.map((doc) => doc.data().newsId);
+        const newsIds = likesSnapshot.docs
+          .map((doc) => doc.data().newsId)
+          .filter(
+            (id): id is string => typeof id === 'string' && id.length > 0
+          );
 
         if (newsIds.length === 0) {
           setNews([]);
+          setLoading(false);
           return;
         }
 
@@ -59,6 +64,7 @@ export function UserLikedNews() {
         setNews(newsData);
       } catch (error) {
         console.error('Erro ao buscar notícias curtidas:', error);
+        setNews([]);
       } finally {
         setLoading(false);
       }

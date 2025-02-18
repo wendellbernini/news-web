@@ -30,7 +30,7 @@ export function UserComments() {
 
   useEffect(() => {
     const fetchComments = async () => {
-      if (!user) {
+      if (!user || !user.uid) {
         setLoading(false);
         return;
       }
