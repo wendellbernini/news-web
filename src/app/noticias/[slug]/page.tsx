@@ -20,17 +20,18 @@ async function getNewsData(slug: string) {
   }
 }
 
-// Tipos para os parâmetros
-type Props = {
+interface PageProps {
   params: {
     slug: string;
   };
-};
+  searchParams: { [key: string]: string | string[] | undefined };
+}
 
 // Função assíncrona para gerar os metadados
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params;
-  const { slug } = resolvedParams;
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = params;
   const news = await getNewsData(slug);
 
   return {
@@ -49,9 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // Função principal que renderiza a página
-export default async function NewsPage({ params }: Props) {
-  const resolvedParams = await params;
-  const { slug } = resolvedParams;
+export default async function NewsPage({ params }: PageProps) {
+  const { slug } = params;
   const news = await getNewsData(slug);
 
   if (!news) {
