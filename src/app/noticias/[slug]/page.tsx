@@ -10,14 +10,28 @@ import { unstable_noStore as noStore } from 'next/cache';
 // Função assíncrona para pegar os dados da notícia
 async function getNewsData(slug: string) {
   noStore();
-  const newsQuery = query(collection(db, 'news'), where('slug', '==', slug));
-  const snapshot = await getDocs(newsQuery);
-  return !snapshot.empty ? snapshot.docs[0].data() : null;
+  try {
+    const newsQuery = query(collection(db, 'news'), where('slug', '==', slug));
+    const snapshot = await getDocs(newsQuery);
+    return !snapshot.empty ? snapshot.docs[0].data() : null;
+  } catch (error) {
+    console.error('Erro ao buscar notícia:', error);
+    return null;
+  }
 }
 
+// Tipos para os parâmetros
+type Props = {
+  params: {
+    slug: string;
+  };
+};
+
 // Função assíncrona para gerar os metadados
-export async function generateMetadata(props: any): Promise<Metadata> {
-  const news = await getNewsData(props.params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const { slug } = resolvedParams;
+  const news = await getNewsData(slug);
 
   return {
     title: news
@@ -35,8 +49,10 @@ export async function generateMetadata(props: any): Promise<Metadata> {
 }
 
 // Função principal que renderiza a página
-export default async function NewsPage(props: any) {
-  const news = await getNewsData(props.params.slug);
+export default async function NewsPage({ params }: Props) {
+  const resolvedParams = await params;
+  const { slug } = resolvedParams;
+  const news = await getNewsData(slug);
 
   if (!news) {
     return (
@@ -52,8 +68,8 @@ export default async function NewsPage(props: any) {
     <RootLayout>
       <div className="container py-8">
         <Suspense fallback={<div>Carregando...</div>}>
-          <NewsDetail slug={props.params.slug} />
-          <CommentSection newsSlug={props.params.slug} />
+          <NewsDetail slug={slug} />
+          <CommentSection newsSlug={slug} />
         </Suspense>
       </div>
     </RootLayout>

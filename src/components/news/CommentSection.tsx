@@ -44,10 +44,15 @@ export function CommentSection({ newsSlug }: CommentSectionProps) {
       );
 
       const snapshot = await getDocs(commentsQuery);
-      const commentsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Comment[];
+      const commentsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+          updatedAt: data.updatedAt?.toDate?.() || new Date(data.updatedAt),
+        };
+      }) as Comment[];
 
       setComments(commentsData);
     } catch (error) {
