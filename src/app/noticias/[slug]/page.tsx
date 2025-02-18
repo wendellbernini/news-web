@@ -20,10 +20,12 @@ async function getNewsData(slug: string) {
   }
 }
 
-type PageProps = {
+type SearchParamsType = { [key: string]: string | string[] | undefined };
+
+interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
+  searchParams?: Promise<SearchParamsType>;
+}
 
 // Função assíncrona para gerar os metadados
 export async function generateMetadata({
