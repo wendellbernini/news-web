@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { NewsCard } from './NewsCard';
 import { News } from '@/types';
@@ -26,42 +26,7 @@ export function TrendingNews() {
   const [lastDoc, setLastDoc] = useState<any>(null);
   const { ref, inView } = useInView();
 
-  useEffect(() => {
-    fetchTrendingNews();
-  }, []);
-
-  useEffect(() => {
-    if (inView && hasMore && !loading) {
-      fetchMoreNews();
-    }
-  }, [inView, hasMore, loading]);
-
-  const fetchTrendingNews = async () => {
-    try {
-      const newsQuery = query(
-        collection(db, 'news'),
-        where('published', '==', true),
-        orderBy('views', 'desc'),
-        limit(PAGE_SIZE)
-      );
-
-      const snapshot = await getDocs(newsQuery);
-      const newsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as News[];
-
-      setNews(newsData);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
-    } catch (error) {
-      console.error('Erro ao buscar notícias:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchMoreNews = async () => {
+  const fetchMoreNews = useCallback(async () => {
     if (!lastDoc) return;
 
     setLoading(true);
@@ -76,10 +41,19 @@ export function TrendingNews() {
       );
 
       const snapshot = await getDocs(newsQuery);
-      const newsData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as News[];
+      const newsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.seconds
+            ? new Date(data.createdAt.seconds * 1000)
+            : new Date(),
+          updatedAt: data.updatedAt?.seconds
+            ? new Date(data.updatedAt.seconds * 1000)
+            : new Date(),
+        };
+      }) as News[];
 
       setNews((prev) => [...prev, ...newsData]);
       setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
@@ -89,7 +63,51 @@ export function TrendingNews() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [lastDoc]);
+
+  const fetchTrendingNews = useCallback(async () => {
+    try {
+      const newsQuery = query(
+        collection(db, 'news'),
+        where('published', '==', true),
+        orderBy('views', 'desc'),
+        limit(PAGE_SIZE)
+      );
+
+      const snapshot = await getDocs(newsQuery);
+      const newsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.seconds
+            ? new Date(data.createdAt.seconds * 1000)
+            : new Date(),
+          updatedAt: data.updatedAt?.seconds
+            ? new Date(data.updatedAt.seconds * 1000)
+            : new Date(),
+        };
+      }) as News[];
+
+      setNews(newsData);
+      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      setHasMore(snapshot.docs.length === PAGE_SIZE);
+    } catch (error) {
+      console.error('Erro ao buscar notícias:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTrendingNews();
+  }, [fetchTrendingNews]);
+
+  useEffect(() => {
+    if (inView && hasMore && !loading) {
+      fetchMoreNews();
+    }
+  }, [inView, hasMore, loading, fetchMoreNews]);
 
   const handleLike = (newsId: string) => {
     // Implementar a funcionalidade de curtir
