@@ -17,6 +17,8 @@ interface NewsCardProps {
   news: News;
   onLike?: (newsId: string) => void;
   onShare?: (news: News) => void;
+  onToggleSave?: (newsId: string) => Promise<void>;
+  onCheckSaved?: (newsId: string) => Promise<boolean>;
 }
 
 export function NewsCard({ news, onLike, onShare }: NewsCardProps) {
