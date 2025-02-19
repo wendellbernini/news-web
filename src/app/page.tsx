@@ -20,9 +20,11 @@ export default function Home() {
         </Suspense>
 
         <div className="mt-12">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-8 space-y-4 md:flex md:items-center md:justify-between md:space-y-0">
             <h2 className="text-3xl font-bold">Últimas Notícias</h2>
-            <CategoryFilter />
+            <div className="w-full md:w-auto">
+              <CategoryFilter />
+            </div>
           </div>
 
           <Suspense

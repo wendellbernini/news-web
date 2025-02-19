@@ -216,7 +216,7 @@ export default function HistoricoPage() {
     return () => {
       isMounted = false;
     };
-  }, [user?.id, authLoading]);
+  }, [user?.id, authLoading, loading, history.length]);
 
   if (authLoading || loading) {
     return (
