@@ -1,0 +1,144 @@
+# VISÃO GERAL DO PROJETO
+
+O NewsWeb é um portal de notícias moderno e dinâmico desenvolvido com Next.js 14, focado em performance, usabilidade e escalabilidade. O projeto utiliza as mais recentes tecnologias web para oferecer uma experiência completa de consumo e gerenciamento de notícias.
+
+# Estrutura de Pastas Atual
+
+.
+├── public/                    # Arquivos públicos estáticos
+│   ├── images/               # Imagens do projeto
+│   │   └── avatar.png        # Avatar padrão para usuários
+│   └── favicon.ico           # Ícone do site
+├── src/                      # Código fonte
+│   ├── app/                  # Páginas da aplicação (App Router)
+│   │   ├── admin/           # Área administrativa
+│   │   ├── auth/            # Páginas de autenticação
+│   │   ├── noticias/        # Páginas de notícias
+│   │   ├── perfil/          # Área do usuário
+│   │   └── layout.tsx       # Layout principal
+│   ├── components/          # Componentes React
+│   │   ├── admin/          # Componentes administrativos
+│   │   ├── news/           # Componentes de notícias
+│   │   └── ui/             # Componentes de interface
+│   ├── hooks/              # Hooks personalizados
+│   ├── lib/                # Configurações e utilitários
+│   ├── store/             # Gerenciamento de estado
+│   └── types/             # Definições de tipos TypeScript
+
+# Tecnologias Principais
+
+- Frontend: Next.js 14 com React e TypeScript
+- Estilização: Tailwind CSS para design responsivo
+- Backend: Firebase (Authentication, Firestore)
+- Armazenamento: Cloudinary para imagens
+- Estado: Zustand para gerenciamento global
+- Autenticação: Firebase Auth (Google e Email/Senha)
+
+# Funcionalidades Principais
+
+1. Sistema de Notícias
+- Feed dinâmico com paginação infinita
+- Categorização de conteúdo
+- Sistema de busca avançada
+- Compartilhamento social
+
+2. Área Administrativa
+- Dashboard para gestão de conteúdo
+- Editor de notícias rico
+- Análise de métricas
+- Gerenciamento de usuários
+
+3. Perfil do Usuário
+- Histórico de leitura
+- Notícias salvas
+- Preferências personalizadas
+- Notificações
+
+# Regras de Negócio
+
+1. Autenticação
+- Registro com email/senha ou Google
+- Verificação de email
+- Recuperação de senha
+- Níveis de acesso (admin/usuário)
+
+2. Notícias
+- Moderação de conteúdo
+- Sistema de tags e categorias
+- Otimização SEO
+- Cache e performance
+
+3. Interações
+- Sistema de comentários
+- Compartilhamento
+- Curtidas e salvamentos
+
+# Variáveis de Ambiente (.env) Não deve alterar .env.local, somente .env.local.example
+
+# Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY=""
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=""
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=""
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=""
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=""
+NEXT_PUBLIC_FIREBASE_APP_ID=""
+
+FIREBASE_CLIENT_EMAIL=""
+FIREBASE_PRIVATE_KEY=""
+
+# Cloudinary
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=""
+CLOUDINARY_API_KEY=""
+CLOUDINARY_API_SECRET=""
+
+# Processo de Desenvolvimento
+
+1. Fluxo Git
+git add .
+git commit -m "feat/fix/docs: descrição clara da alteração"
+git push origin main
+
+2. Padrões de Código
+- ESLint para padronização
+- Prettier para formatação
+- TypeScript strict mode
+- Comentários explicativos em português
+
+3. Documentação
+- README atualizado
+- Documentação de componentes
+- Histórico de alterações
+- Guias de contribuição
+
+# Importante
+
+- Manter documentação atualizada
+- Seguir padrões de commits
+- Testar antes de fazer push
+- Comentar código complexo
+- Otimizar performance
+- Seguir princípios SOLID
+- Manter segurança dos dados
+
+# Categorias de Notícias
+- Tecnologia
+- Esportes
+- Política
+- Economia
+- Entretenimento
+- Saúde
+- Educação
+- Ciência
+
+# Scripts Disponíveis
+- npm run dev: Inicia o servidor de desenvolvimento
+- npm run build: Cria a build de produção
+- npm run start: Inicia o servidor de produção
+- npm run lint: Executa o linter
+- npm run format: Formata o código com Prettier
+
+# Licença
+Este projeto é de propriedade de web-news. Todos os direitos reservados.
+
+# Autor
+Wendell Bernini - @wendellbernini

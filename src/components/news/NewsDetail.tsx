@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/Button';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { useReadHistory } from '@/hooks/useReadHistory';
+import { useAuth } from '@/hooks/useAuth';
 
 interface NewsDetailProps {
   slug: string;
@@ -18,9 +20,12 @@ interface NewsDetailProps {
 
 export function NewsDetail({ slug }: NewsDetailProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const { addToHistory } = useReadHistory();
   const [news, setNews] = useState<News | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [historyRegistered, setHistoryRegistered] = useState(false);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -39,12 +44,14 @@ export function NewsDetail({ slug }: NewsDetailProps) {
         if (!snapshot.empty) {
           const newsDoc = snapshot.docs[0];
           const data = newsDoc.data();
-          setNews({
+          const newsData = {
             id: newsDoc.id,
             ...data,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
-          } as News);
+          } as News;
+
+          setNews(newsData);
         } else {
           setError('Notícia não encontrada');
           toast.error('Notícia não encontrada');
@@ -62,6 +69,51 @@ export function NewsDetail({ slug }: NewsDetailProps) {
 
     fetchNews();
   }, [slug]);
+
+  // Efeito separado para registrar o histórico
+  useEffect(() => {
+    const registerHistory = async () => {
+      if (!news || !user || historyRegistered) {
+        console.log(
+          'NewsDetail: Condições não atendidas para registrar histórico:',
+          {
+            hasNews: !!news,
+            hasUser: !!user,
+            alreadyRegistered: historyRegistered,
+          }
+        );
+        return;
+      }
+
+      // Marca como registrado antes de tentar registrar para evitar chamadas duplicadas
+      setHistoryRegistered(true);
+
+      try {
+        console.log('NewsDetail: Iniciando registro de histórico:', {
+          newsId: news.id,
+          newsSlug: news.slug,
+          newsTitle: news.title,
+        });
+
+        await addToHistory(news.id, news.slug, news.title);
+        console.log(
+          'NewsDetail: Histórico registrado com sucesso:',
+          news.title
+        );
+      } catch (error) {
+        console.error('NewsDetail: Erro ao registrar histórico:', error);
+        // Só desmarca como registrado se o erro não for de "já registrado"
+        if (
+          error instanceof Error &&
+          !error.message.includes('já está no histórico')
+        ) {
+          setHistoryRegistered(false);
+        }
+      }
+    };
+
+    registerHistory();
+  }, [news, user, addToHistory, historyRegistered]);
 
   if (loading) {
     return (

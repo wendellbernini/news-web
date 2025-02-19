@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2 } from 'lucide-react';
 
 export default function ConfiguracoesPage() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
 
   if (!user) {
     return (

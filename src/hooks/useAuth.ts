@@ -21,8 +21,13 @@ export const useAuth = () => {
   const { user, setUser } = useStore();
 
   useEffect(() => {
+    let mounted = true;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('Auth state changed:', firebaseUser);
+
+      if (!mounted) return;
+
       if (firebaseUser) {
         try {
           // Obtém o token do usuário
@@ -32,6 +37,7 @@ export const useAuth = () => {
 
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           console.log('User doc exists:', userDoc.exists());
+
           if (userDoc.exists()) {
             const userData = userDoc.data() as User;
             console.log('User data from Firestore:', userData);
@@ -56,10 +62,16 @@ export const useAuth = () => {
         document.cookie =
           'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
       }
-      setLoading(false);
+
+      if (mounted) {
+        setLoading(false);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [setUser]);
 
   const createUserProfile = async (
