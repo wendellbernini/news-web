@@ -6,7 +6,13 @@ import { Loader2 } from 'lucide-react';
 import { News } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+} from 'firebase/firestore';
 import { toast } from 'react-hot-toast';
 
 interface SavedNewsProps {
@@ -21,13 +27,21 @@ export function SavedNews({ onToggleSave, onCheckSaved }: SavedNewsProps) {
 
   useEffect(() => {
     const fetchSavedNews = async () => {
+      console.log('SavedNews: Iniciando fetchSavedNews, user:', user);
+
       if (!user) {
+        console.log('SavedNews: Usuário não encontrado, limpando lista');
         setSavedNews([]);
         setLoading(false);
         return;
       }
 
       try {
+        console.log(
+          'SavedNews: Buscando notícias salvas para usuário:',
+          user.id
+        );
+
         const savedNewsQuery = query(
           collection(db, 'savedNews'),
           where('userId', '==', user.id),
@@ -35,28 +49,76 @@ export function SavedNews({ onToggleSave, onCheckSaved }: SavedNewsProps) {
         );
 
         const savedNewsSnapshot = await getDocs(savedNewsQuery);
-        const newsIds = savedNewsSnapshot.docs.map((doc) => doc.data().newsId);
+        console.log(
+          'SavedNews: Documentos encontrados:',
+          savedNewsSnapshot.docs.length
+        );
+
+        // Criar um Set para evitar IDs duplicados
+        const uniqueNewsIds = new Set(
+          savedNewsSnapshot.docs.map((doc) => doc.data().newsId)
+        );
+        const newsIds = Array.from(uniqueNewsIds);
+
+        console.log('SavedNews: IDs únicos das notícias:', newsIds);
 
         if (newsIds.length === 0) {
+          console.log('SavedNews: Nenhuma notícia salva encontrada');
           setSavedNews([]);
           setLoading(false);
           return;
         }
 
-        const newsQuery = query(
-          collection(db, 'news'),
-          where('id', 'in', newsIds)
+        // Buscar cada notícia individualmente
+        const newsPromises = newsIds.map(async (newsId) => {
+          try {
+            const newsRef = collection(db, 'news');
+            const newsQuery = query(newsRef, where('__name__', '==', newsId));
+            const newsSnapshot = await getDocs(newsQuery);
+
+            if (!newsSnapshot.empty) {
+              const doc = newsSnapshot.docs[0];
+              const data = doc.data();
+
+              // Converter timestamps para Date
+              const createdAt =
+                data.createdAt instanceof Timestamp
+                  ? data.createdAt.toDate()
+                  : new Date(data.createdAt);
+
+              const updatedAt =
+                data.updatedAt instanceof Timestamp
+                  ? data.updatedAt.toDate()
+                  : new Date(data.updatedAt);
+
+              return {
+                id: doc.id,
+                ...data,
+                createdAt,
+                updatedAt,
+              } as News;
+            }
+            return null;
+          } catch (error) {
+            console.error(`Erro ao buscar notícia ${newsId}:`, error);
+            return null;
+          }
+        });
+
+        const newsResults = await Promise.all(newsPromises);
+        const newsData = newsResults.filter(
+          (news): news is News => news !== null
         );
 
-        const newsSnapshot = await getDocs(newsQuery);
-        const newsData = newsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as News[];
+        console.log(
+          'SavedNews: Detalhes das notícias encontrados:',
+          newsData.length
+        );
+        console.log('SavedNews: Dados das notícias:', newsData);
 
         setSavedNews(newsData);
       } catch (error) {
-        console.error('Erro ao carregar notícias salvas:', error);
+        console.error('SavedNews: Erro ao carregar notícias salvas:', error);
         toast.error('Erro ao carregar notícias salvas');
       } finally {
         setLoading(false);
@@ -102,7 +164,7 @@ export function SavedNews({ onToggleSave, onCheckSaved }: SavedNewsProps) {
         <div className="grid gap-6 sm:grid-cols-2">
           {savedNews.map((news) => (
             <NewsCard
-              key={news.id}
+              key={`${news.id}-${news.createdAt.getTime()}`}
               news={news}
               onShare={() => handleShare(news.id)}
               onToggleSave={onToggleSave}
