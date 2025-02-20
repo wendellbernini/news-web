@@ -24,39 +24,60 @@ export const useAuth = () => {
     let mounted = true;
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('Auth state changed:', firebaseUser);
+      console.log('[Auth Debug] Auth state changed:', firebaseUser?.uid);
 
       if (!mounted) return;
 
       if (firebaseUser) {
         try {
+          console.log(
+            '[Auth Debug] Obtendo token para usuário:',
+            firebaseUser.uid
+          );
           // Obtém o token do usuário
           const token = await firebaseUser.getIdToken();
-          // Salva o token nos cookies
-          document.cookie = `firebase-token=${token}; path=/`;
+          console.log('[Auth Debug] Token obtido, salvando no cookie');
+
+          // Salva o token nos cookies com configurações mais específicas
+          const secure = window.location.protocol === 'https:';
+          document.cookie = `firebase-token=${token}; path=/; ${secure ? 'secure;' : ''} samesite=strict`;
+          console.log('[Auth Debug] Cookie salvo com configurações:', {
+            secure,
+            path: '/',
+          });
 
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          console.log('User doc exists:', userDoc.exists());
+          console.log(
+            '[Auth Debug] Documento do usuário existe?',
+            userDoc.exists()
+          );
 
           if (userDoc.exists()) {
             const userData = userDoc.data() as User;
-            console.log('User data from Firestore:', userData);
+            console.log('[Auth Debug] Dados do usuário:', {
+              uid: userData.id,
+              role: userData.role,
+              email: userData.email,
+            });
             setUser(userData);
           } else {
-            // Se o documento não existir, cria um novo
-            console.log('Creating new user profile...');
+            console.log('[Auth Debug] Criando novo perfil de usuário');
             const userData = await createUserProfile(firebaseUser);
-            console.log('New user profile created:', userData);
+            console.log('[Auth Debug] Novo perfil criado:', {
+              uid: userData.id,
+              role: userData.role,
+            });
             setUser(userData);
           }
         } catch (error) {
-          console.error('Erro ao buscar dados do usuário:', error);
+          console.error('[Auth Debug] Erro ao processar autenticação:', error);
           setUser(null);
           // Remove o token dos cookies em caso de erro
           document.cookie =
             'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
         }
       } else {
+        console.log('[Auth Debug] Usuário deslogado, limpando dados');
         setUser(null);
         // Remove o token dos cookies ao fazer logout
         document.cookie =
