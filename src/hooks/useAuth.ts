@@ -15,10 +15,12 @@ import { auth, db } from '@/lib/firebase/config';
 import useStore from '@/store/useStore';
 import { User } from '@/types';
 import { toast } from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const { user, setUser } = useStore();
+  const router = useRouter();
 
   useEffect(() => {
     let mounted = true;
@@ -34,16 +36,19 @@ export const useAuth = () => {
             '[Auth Debug] Obtendo token para usuário:',
             firebaseUser.uid
           );
+
           // Obtém o token do usuário
-          const token = await firebaseUser.getIdToken();
+          const token = await firebaseUser.getIdToken(true); // Force refresh
           console.log('[Auth Debug] Token obtido, salvando no cookie');
 
           // Salva o token nos cookies com configurações mais específicas
           const secure = window.location.protocol === 'https:';
-          document.cookie = `firebase-token=${token}; path=/; ${secure ? 'secure;' : ''} samesite=strict`;
+          const cookieString = `firebase-token=${token}; path=/; ${secure ? 'secure;' : ''} samesite=strict; max-age=3600`;
+          document.cookie = cookieString;
           console.log('[Auth Debug] Cookie salvo com configurações:', {
             secure,
             path: '/',
+            maxAge: '3600',
           });
 
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
@@ -60,28 +65,41 @@ export const useAuth = () => {
               email: userData.email,
             });
             setUser(userData);
+
+            // Se estiver na página de login e for admin, redireciona para /admin
+            if (
+              window.location.pathname === '/login' &&
+              userData.role === 'admin'
+            ) {
+              console.log(
+                '[Auth Debug] Redirecionando admin para área administrativa'
+              );
+              router.push('/admin');
+            }
           } else {
             console.log('[Auth Debug] Criando novo perfil de usuário');
             const userData = await createUserProfile(firebaseUser);
-            console.log('[Auth Debug] Novo perfil criado:', {
-              uid: userData.id,
-              role: userData.role,
-            });
             setUser(userData);
           }
         } catch (error) {
           console.error('[Auth Debug] Erro ao processar autenticação:', error);
           setUser(null);
-          // Remove o token dos cookies em caso de erro
           document.cookie =
             'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
         }
       } else {
         console.log('[Auth Debug] Usuário deslogado, limpando dados');
         setUser(null);
-        // Remove o token dos cookies ao fazer logout
         document.cookie =
           'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+
+        // Se estiver em uma rota protegida, redireciona para login
+        if (
+          window.location.pathname.startsWith('/admin') ||
+          window.location.pathname.startsWith('/perfil')
+        ) {
+          router.push('/login');
+        }
       }
 
       if (mounted) {
@@ -93,7 +111,7 @@ export const useAuth = () => {
       mounted = false;
       unsubscribe();
     };
-  }, [setUser]);
+  }, [setUser, router]);
 
   const createUserProfile = async (
     firebaseUser: FirebaseUser
