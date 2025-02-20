@@ -19,17 +19,17 @@ export async function middleware(request: NextRequest) {
   // Verifica se é uma rota administrativa
   if (isAdminRoute) {
     try {
+      console.log('Middleware: Verificando permissões de admin');
       // Verifica se o usuário é admin através da API
-      const response = await fetch(
-        new URL('/api/auth/check-admin', request.url),
-        {
-          headers: {
-            cookie: `firebase-token=${token?.value}`,
-          },
-        }
-      );
+      const baseUrl = request.nextUrl.origin;
+      const response = await fetch(`${baseUrl}/api/auth/check-admin`, {
+        headers: {
+          cookie: `firebase-token=${token?.value}`,
+        },
+      });
 
       if (!response.ok) {
+        console.log('Middleware: Resposta da API não ok:', response.status);
         return NextResponse.redirect(new URL('/', request.url));
       }
 
