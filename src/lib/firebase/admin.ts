@@ -1,6 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
+import { getAuth, Auth } from 'firebase-admin/auth';
 
 if (!process.env.FIREBASE_PRIVATE_KEY || !process.env.FIREBASE_CLIENT_EMAIL) {
   console.error('Credenciais do Firebase Admin não encontradas');
@@ -22,8 +22,8 @@ const formatPrivateKey = (key: string) => {
   return trimmedKey.replace(/\\n/g, '\n');
 };
 
-let adminAuth;
-let adminDb;
+let adminAuth: Auth;
+let adminDb: Firestore;
 
 try {
   console.log('[Admin Debug] Iniciando configuração do Firebase Admin');
