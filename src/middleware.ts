@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  // Ignorar rotas da API
+  if (request.nextUrl.pathname.startsWith('/api/v1/')) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get('firebase-token');
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const isProfileRoute = request.nextUrl.pathname.startsWith('/perfil');
