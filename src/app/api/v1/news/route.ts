@@ -17,9 +17,13 @@ export async function GET(request: Request) {
   try {
     // Validar API Key
     const apiKey = request.headers.get('x-api-key');
+    console.log('[API Route] Recebida API key:', apiKey);
+
     const isValidKey = await validateApiKey(apiKey);
+    console.log('[API Route] Resultado da validação:', isValidKey);
 
     if (!isValidKey) {
+      console.log('[API Route] API key inválida, retornando erro 401');
       return NextResponse.json({ error: 'API Key inválida' }, { status: 401 });
     }
 
