@@ -2,10 +2,11 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { Newspaper, Users, Globe, Shield } from 'lucide-react';
+import { SITE_NAME, SITE_INFO } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Sobre | NewsWeb',
-  description: 'Conheça mais sobre o NewsWeb e nossa missão de informar',
+  title: `Sobre | ${SITE_NAME}`,
+  description: `Conheça mais sobre o ${SITE_NAME} e nossa missão de informar`,
 };
 
 const features = [
@@ -25,7 +26,7 @@ const features = [
     icon: Globe,
     title: 'Cobertura Abrangente',
     description:
-      'Notícias relevantes sobre diversos temas que impactam nossa sociedade.',
+      'Notícias relevantes sobre o Rio de Janeiro e temas que impactam nossa cidade.',
   },
   {
     icon: Shield,
@@ -42,10 +43,9 @@ export default function AboutPage() {
         <div className="mx-auto max-w-4xl">
           {/* Hero Section */}
           <div className="mb-12 text-center">
-            <h1 className="text-4xl font-bold">Sobre o NewsWeb</h1>
+            <h1 className="text-4xl font-bold">Sobre o {SITE_NAME}</h1>
             <p className="mt-4 text-lg text-secondary-600 dark:text-secondary-400">
-              Um portal de notícias moderno e confiável, comprometido com a
-              qualidade da informação e a experiência do leitor.
+              {SITE_INFO.description}
             </p>
           </div>
 
@@ -69,10 +69,7 @@ export default function AboutPage() {
           <div className="mb-16 rounded-lg bg-primary-50 p-8 dark:bg-primary-900/10">
             <h2 className="mb-4 text-2xl font-bold">Nossa Missão</h2>
             <p className="text-lg text-secondary-600 dark:text-secondary-400">
-              O NewsWeb nasceu com a missão de fornecer informação de qualidade
-              de forma acessível e moderna. Acreditamos no poder do jornalismo
-              para transformar a sociedade e na importância de manter nossos
-              leitores bem informados sobre os acontecimentos mais relevantes.
+              {SITE_INFO.mission}
             </p>
           </div>
 
@@ -105,9 +102,14 @@ export default function AboutPage() {
             <p className="mb-6 text-secondary-600 dark:text-secondary-400">
               Tem alguma dúvida ou sugestão? Gostaríamos muito de ouvir você.
             </p>
+            <div className="space-y-2 text-secondary-600 dark:text-secondary-400">
+              <p>Email: {SITE_INFO.email}</p>
+              <p>Telefone: {SITE_INFO.phone}</p>
+              <p>Endereço: {SITE_INFO.address}</p>
+            </div>
             <a
               href="/contato"
-              className="inline-block rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700"
+              className="mt-6 inline-block rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700"
             >
               Fale Conosco
             </a>
