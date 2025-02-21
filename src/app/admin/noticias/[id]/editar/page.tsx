@@ -2,9 +2,10 @@ import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { NewsForm } from '@/components/admin/NewsForm';
 import { unstable_noStore as noStore } from 'next/cache';
+import { SITE_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Editar Notícia | NewsWeb',
+  title: `Editar Notícia | ${SITE_NAME}`,
   description: 'Edite uma notícia existente',
 };
 

@@ -1,18 +1,18 @@
 import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { Accordion } from '@/components/ui/Accordion';
+import { SITE_NAME, SITE_INFO } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Perguntas Frequentes | NewsWeb',
-  description:
-    'Encontre respostas para as perguntas mais comuns sobre o NewsWeb',
+  title: `Perguntas Frequentes | ${SITE_NAME}`,
+  description: `Encontre respostas para as perguntas mais comuns sobre o ${SITE_NAME}`,
 };
 
 const faqItems = [
   {
-    question: 'Como faço para criar uma conta no NewsWeb?',
+    question: `Como faço para criar uma conta no ${SITE_NAME}?`,
     answer:
-      'Você pode criar uma conta facilmente clicando no botão "Entrar" no topo da página e escolhendo entre fazer login com sua conta Google ou criar uma nova conta com seu e-mail.',
+      'Para criar uma conta, clique no botão "Entrar" no canto superior direito e selecione "Criar conta". Você pode se cadastrar usando seu e-mail e senha ou sua conta do Google.',
   },
   {
     question: 'Como posso comentar em uma notícia?',
@@ -35,14 +35,12 @@ const faqItems = [
       'Você pode ativar as notificações do navegador para receber alertas quando publicarmos novas notícias. Além disso, você pode se inscrever em nossa newsletter para receber atualizações por e-mail.',
   },
   {
-    question: 'Como posso entrar em contato com a equipe do NewsWeb?',
-    answer:
-      'Você pode entrar em contato conosco através da nossa página de contato ou enviando um e-mail diretamente para contato@newsweb.com.',
+    question: `Como posso entrar em contato com a equipe do ${SITE_NAME}?`,
+    answer: `Você pode entrar em contato conosco através da nossa página de contato ou enviando um e-mail diretamente para ${SITE_INFO.email}.`,
   },
   {
-    question: 'O NewsWeb é gratuito?',
-    answer:
-      'Sim, o NewsWeb é completamente gratuito para todos os usuários. Não há custos para ler, comentar ou interagir com as notícias.',
+    question: `O ${SITE_NAME} é gratuito?`,
+    answer: `Sim, o ${SITE_NAME} é completamente gratuito para todos os usuários. Não há custos para ler, comentar ou interagir com as notícias.`,
   },
   {
     question: 'Como posso sugerir uma pauta?',
@@ -58,8 +56,9 @@ export default function FAQPage() {
         <div className="mx-auto max-w-3xl">
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-bold">Perguntas Frequentes</h1>
-            <p className="mt-2 text-secondary-600 dark:text-secondary-400">
-              Encontre respostas para as perguntas mais comuns sobre o NewsWeb
+            <p className="mb-8 text-lg text-gray-600">
+              Encontre respostas para as perguntas mais comuns sobre o{' '}
+              {SITE_NAME}
             </p>
           </div>
 

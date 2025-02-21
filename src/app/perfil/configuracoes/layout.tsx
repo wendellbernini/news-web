@@ -1,8 +1,9 @@
 import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
+import { SITE_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Configurações | NewsWeb',
+  title: `Configurações | ${SITE_NAME}`,
   description: 'Gerencie suas configurações de conta',
 };
 

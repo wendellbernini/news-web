@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { SITE_INFO } from '@/lib/constants';
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
@@ -39,6 +40,15 @@ export default function ContactPage() {
         <p className="mt-4 text-lg text-secondary-600 dark:text-secondary-400">
           Estamos aqui para ouvir você. Entre em contato conosco através dos
           canais abaixo ou preencha o formulário.
+        </p>
+        <p className="mb-4 text-gray-600">
+          Você também pode entrar em contato diretamente através do e-mail:{' '}
+          <a
+            href={`mailto:${SITE_INFO.email}`}
+            className="text-primary-600 hover:underline"
+          >
+            {SITE_INFO.email}
+          </a>
         </p>
       </div>
 

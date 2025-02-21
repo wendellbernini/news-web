@@ -6,6 +6,7 @@ import { CommentSection } from '@/components/news/CommentSection';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { unstable_noStore as noStore } from 'next/cache';
+import { SITE_NAME } from '@/lib/constants';
 
 // Função assíncrona para pegar os dados da notícia
 async function getNewsData(slug: string) {
@@ -37,13 +38,13 @@ export async function generateMetadata({
 
   return {
     title: news
-      ? `${news.title} | NewsWeb`
-      : 'Notícia não encontrada | NewsWeb',
+      ? `${news.title} | ${SITE_NAME}`
+      : `Notícia não encontrada | ${SITE_NAME}`,
     description: news?.summary || 'Detalhes da notícia',
     openGraph: {
       title: news
-        ? `${news.title} | NewsWeb`
-        : 'Notícia não encontrada | NewsWeb',
+        ? `${news.title} | ${SITE_NAME}`
+        : `Notícia não encontrada | ${SITE_NAME}`,
       description: news?.summary || 'Detalhes da notícia',
       images: news?.imageUrl ? [news.imageUrl] : [],
     },

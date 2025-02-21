@@ -1,6 +1,6 @@
-Licença Proprietária
+MIT License
 
-Copyright (c) 2024 NewsWeb
+Copyright (c) 2024 Rio de Fato
 
 Todos os direitos reservados.
 

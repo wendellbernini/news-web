@@ -1,10 +1,10 @@
-# Integração Power BI - NewsWeb API
+# Integração Power BI - Rio de Fato API
 
-Este guia explica como integrar o Power BI com a API REST do NewsWeb para análise de dados.
+Este guia explica como integrar o Power BI com a API REST do Rio de Fato para análise de dados.
 
 ## Pré-requisitos
 
-1. Acesso administrativo ao NewsWeb
+1. Acesso administrativo ao Rio de Fato
 2. Power BI Desktop instalado
 3. API Key válida (gerar em /admin/api-keys)
 

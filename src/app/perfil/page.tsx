@@ -3,9 +3,10 @@ import { RootLayout } from '@/components/layout/RootLayout';
 import { UserProfile } from '@/components/user/UserProfile';
 import { UserComments } from '@/components/user/UserComments';
 import { UserLikedNews } from '@/components/user/UserLikedNews';
+import { SITE_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Meu Perfil | NewsWeb',
+  title: `Meu Perfil | ${SITE_NAME}`,
   description: 'Gerencie seu perfil e veja suas interações',
 };
 

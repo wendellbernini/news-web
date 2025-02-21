@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { NewsForm } from '@/components/admin/NewsForm';
+import { SITE_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Nova Notícia | NewsWeb',
+  title: `Nova Notícia | ${SITE_NAME}`,
   description: 'Adicione uma nova notícia ao portal',
 };
 

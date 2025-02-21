@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { SITE_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Painel de Administração | NewsWeb',
+  title: `Painel de Administração | ${SITE_NAME}`,
   description: 'Gerencie as notícias do portal',
 };
 

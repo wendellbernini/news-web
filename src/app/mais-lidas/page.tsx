@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { TrendingNews } from '@/components/news/TrendingNews';
+import { SITE_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Mais Lidas | NewsWeb',
+  title: `Mais Lidas | ${SITE_NAME}`,
   description: 'As notícias mais lidas e populares do momento',
 };
 
