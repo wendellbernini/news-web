@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import useStore from '@/store/useStore';
 import { NewsletterPreferences } from '@/types';
 
@@ -18,14 +20,19 @@ export const useNewsletter = () => {
     setLoading(true);
 
     try {
-      // Aqui você implementaria a lógica de inscrição na newsletter
-      // Por exemplo, enviando para uma API ou serviço de email
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      updateNewsletterPreferences({
+      const userRef = doc(db, 'users', user.id);
+      const updatedPreferences = {
         subscribed: true,
         ...preferences,
+      };
+
+      // Atualiza no Firebase
+      await updateDoc(userRef, {
+        newsletter: updatedPreferences,
       });
+
+      // Atualiza o estado local
+      updateNewsletterPreferences(updatedPreferences);
 
       toast.success('Inscrição realizada com sucesso!');
       return true;
@@ -47,12 +54,18 @@ export const useNewsletter = () => {
     setLoading(true);
 
     try {
-      // Aqui você implementaria a lógica de cancelamento da inscrição
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      updateNewsletterPreferences({
+      const userRef = doc(db, 'users', user.id);
+      const updatedPreferences = {
         subscribed: false,
+      };
+
+      // Atualiza no Firebase
+      await updateDoc(userRef, {
+        newsletter: updatedPreferences,
       });
+
+      // Atualiza o estado local
+      updateNewsletterPreferences(updatedPreferences);
 
       toast.success('Inscrição cancelada com sucesso!');
       return true;
@@ -76,10 +89,19 @@ export const useNewsletter = () => {
     setLoading(true);
 
     try {
-      // Aqui você implementaria a lógica de atualização das preferências
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const userRef = doc(db, 'users', user.id);
+      const updatedPreferences = {
+        ...user.newsletter,
+        ...preferences,
+      };
 
-      updateNewsletterPreferences(preferences);
+      // Atualiza no Firebase
+      await updateDoc(userRef, {
+        newsletter: updatedPreferences,
+      });
+
+      // Atualiza o estado local
+      updateNewsletterPreferences(updatedPreferences);
 
       toast.success('Preferências atualizadas com sucesso!');
       return true;

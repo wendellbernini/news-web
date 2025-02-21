@@ -17,10 +17,9 @@ import { toast } from 'react-hot-toast';
 
 interface SavedNewsProps {
   onToggleSave: (newsId: string) => Promise<void>;
-  onCheckSaved: (newsId: string) => Promise<boolean>;
 }
 
-export function SavedNews({ onToggleSave, onCheckSaved }: SavedNewsProps) {
+export function SavedNews({ onToggleSave }: SavedNewsProps) {
   const { user } = useAuth();
   const [savedNews, setSavedNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,7 +167,6 @@ export function SavedNews({ onToggleSave, onCheckSaved }: SavedNewsProps) {
               news={news}
               onShare={() => handleShare(news.id)}
               onToggleSave={onToggleSave}
-              onCheckSaved={onCheckSaved}
             />
           ))}
         </div>

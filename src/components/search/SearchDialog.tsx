@@ -2,17 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Dialog } from '@/components/ui/Dialog';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useNews } from '@/hooks/useNews';
 import { NewsCard } from '@/components/news/NewsCard';
-import { Loader2, Search, X } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 import { News } from '@/types';
+import { useReadingList } from '@/hooks/useReadingList';
 
 export function SearchDialog() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const { searchNews, news: results, loading } = useNews();
+  const { news: results, loading, searchNews } = useNews();
+  const { toggleSaveNews } = useReadingList();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -27,13 +28,17 @@ export function SearchDialog() {
   }, []);
 
   useEffect(() => {
-    if (query) {
-      const debounce = setTimeout(() => {
-        searchNews(query);
-      }, 300);
+    const handleSearch = async () => {
+      if (!query.trim()) {
+        searchNews('');
+        return;
+      }
 
-      return () => clearTimeout(debounce);
-    }
+      await searchNews(query);
+    };
+
+    const timeoutId = setTimeout(handleSearch, 300);
+    return () => clearTimeout(timeoutId);
   }, [query, searchNews]);
 
   const handleShare = async (news: News) => {
@@ -57,37 +62,27 @@ export function SearchDialog() {
   return (
     <>
       <Button
-        variant="outline"
-        className="relative h-9 w-9 p-0 xl:h-10 xl:w-60 xl:justify-start xl:px-3 xl:py-2"
+        variant="ghost"
+        size="icon"
+        className="relative"
         onClick={() => setOpen(true)}
       >
-        <Search className="h-4 w-4 xl:mr-2" />
-        <span className="hidden xl:inline-flex">Buscar notícias...</span>
-        <kbd className="pointer-events-none absolute right-1.5 top-2 hidden h-6 select-none items-center gap-1 rounded border bg-secondary-100 px-1.5 font-mono text-[10px] font-medium opacity-100 xl:flex">
-          <span className="text-xs">⌘</span>K
-        </kbd>
+        <Search className="h-5 w-5" />
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <div className="fixed inset-0 z-50 flex items-start justify-center sm:items-center">
-          <div className="relative w-full max-w-lg">
-            <div className="overflow-hidden rounded-lg border border-secondary-200 bg-white shadow-xl dark:border-secondary-800 dark:bg-secondary-950">
-              <div className="flex items-center border-b p-4">
-                <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
-                <Input
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" />
+          <div className="fixed inset-0 z-50 flex items-start justify-center sm:items-center">
+            <div className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg dark:bg-secondary-900 sm:p-8">
+              <div className="mb-4">
+                <input
+                  type="text"
                   placeholder="Buscar notícias..."
-                  className="border-0 p-0 focus-visible:ring-0"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  className="w-full rounded-lg border border-secondary-200 bg-transparent px-4 py-2 outline-none focus:border-primary-600 dark:border-secondary-800"
                 />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2"
-                  onClick={() => setOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
 
               <div className="max-h-[60vh] space-y-4 overflow-y-auto p-4">
@@ -109,7 +104,7 @@ export function SearchDialog() {
                       key={news.id}
                       news={news}
                       onShare={handleShare}
-                      onLike={() => {}}
+                      onToggleSave={toggleSaveNews}
                     />
                   ))}
               </div>

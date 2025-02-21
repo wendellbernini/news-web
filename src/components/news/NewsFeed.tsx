@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { NewsCard } from './NewsCard';
 import { useNews } from '@/hooks/useNews';
+import { useReadingList } from '@/hooks/useReadingList';
 import useStore from '@/store/useStore';
 import { Button } from '@/components/ui/Button';
 import { Loader2 } from 'lucide-react';
@@ -11,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 export function NewsFeed() {
   const { news, selectedCategory } = useStore();
   const { fetchNews, fetchMoreNews, hasMore } = useNews();
+  const { toggleSaveNews } = useReadingList();
   const { ref, inView } = useInView();
 
   useEffect(() => {
@@ -22,11 +24,6 @@ export function NewsFeed() {
       fetchMoreNews(selectedCategory || undefined);
     }
   }, [inView, hasMore, selectedCategory]);
-
-  const handleLike = (newsId: string) => {
-    // Implementar a funcionalidade de curtir
-    console.log('Curtir notícia:', newsId);
-  };
 
   const handleShare = async (news: any) => {
     if (navigator.share) {
@@ -53,8 +50,8 @@ export function NewsFeed() {
           <NewsCard
             key={item.id}
             news={item}
-            onLike={handleLike}
             onShare={handleShare}
+            onToggleSave={toggleSaveNews}
           />
         ))}
       </div>

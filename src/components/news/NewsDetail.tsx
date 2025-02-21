@@ -2,26 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-} from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
 import { formatDate } from '@/lib/utils';
-import { Loader2, Heart, Share2, Bookmark } from 'lucide-react';
+import { Loader2, Share2, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useReadHistory } from '@/hooks/useReadHistory';
-import { useAuth } from '@/hooks/useAuth';
 import useStore from '@/store/useStore';
+import { useReadingList } from '@/hooks/useReadingList';
 
 interface NewsDetailProps {
   slug: string;
@@ -29,14 +21,16 @@ interface NewsDetailProps {
 
 export function NewsDetail({ slug }: NewsDetailProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  const store = useStore();
+  const user = useStore((state) => state.user);
+  const { toggleSaveNews } = useReadingList();
   const { addToHistory } = useReadHistory();
   const [news, setNews] = useState<News | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [historyRegistered, setHistoryRegistered] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+
+  // Usa a mesma lógica do NewsCard
+  const isSaved = news ? user?.savedNews?.includes(news.id) || false : false;
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -126,14 +120,6 @@ export function NewsDetail({ slug }: NewsDetailProps) {
     registerHistory();
   }, [news, user, addToHistory, historyRegistered]);
 
-  // Verifica se a notícia está salva
-  useEffect(() => {
-    if (news && user) {
-      const saved = user.savedNews?.includes(news.id) || false;
-      setIsSaved(saved);
-    }
-  }, [news, user]);
-
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -153,10 +139,6 @@ export function NewsDetail({ slug }: NewsDetailProps) {
     );
   }
 
-  const handleLike = () => {
-    toast.success('Funcionalidade em desenvolvimento');
-  };
-
   const handleSave = async () => {
     if (!user) {
       toast.error('Você precisa estar logado para salvar notícias');
@@ -167,40 +149,7 @@ export function NewsDetail({ slug }: NewsDetailProps) {
     if (!news) return;
 
     try {
-      if (isSaved) {
-        // Remove do Zustand
-        store.unsaveNews(news.id);
-
-        // Remove do Firestore
-        const savedNewsQuery = query(
-          collection(db, 'savedNews'),
-          where('userId', '==', user.id),
-          where('newsId', '==', news.id)
-        );
-
-        const snapshot = await getDocs(savedNewsQuery);
-        if (!snapshot.empty) {
-          await deleteDoc(doc(db, 'savedNews', snapshot.docs[0].id));
-        }
-
-        setIsSaved(false);
-        toast.success('Notícia removida da biblioteca');
-      } else {
-        // Salva no Zustand
-        store.saveNews(news.id);
-
-        // Salva no Firestore
-        await addDoc(collection(db, 'savedNews'), {
-          userId: user.id,
-          newsId: news.id,
-          status: 'active',
-          createdAt: new Date(),
-          type: 'savedNews',
-        });
-
-        setIsSaved(true);
-        toast.success('Notícia salva na biblioteca');
-      }
+      await toggleSaveNews(news.id);
     } catch (error) {
       console.error('Erro ao salvar/remover notícia:', error);
       toast.error('Erro ao salvar/remover notícia');
@@ -273,15 +222,6 @@ export function NewsDetail({ slug }: NewsDetailProps) {
 
       <div className="mt-8 flex items-center justify-between border-t border-secondary-200 pt-8 dark:border-secondary-800">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={handleLike}
-          >
-            <Heart className="h-5 w-5" />
-            <span>{news.likes} curtidas</span>
-          </Button>
           <Button
             variant="ghost"
             size="sm"

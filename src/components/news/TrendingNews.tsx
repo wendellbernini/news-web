@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import { NewsCard } from './NewsCard';
+import { useReadingList } from '@/hooks/useReadingList';
 import { News } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Loader2 } from 'lucide-react';
@@ -25,6 +26,7 @@ export function TrendingNews() {
   const [hasMore, setHasMore] = useState(true);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const { ref, inView } = useInView();
+  const { toggleSaveNews } = useReadingList();
 
   const fetchMoreNews = useCallback(async () => {
     if (!lastDoc) return;
@@ -109,11 +111,6 @@ export function TrendingNews() {
     }
   }, [inView, hasMore, loading, fetchMoreNews]);
 
-  const handleLike = (newsId: string) => {
-    // Implementar a funcionalidade de curtir
-    console.log('Curtir notícia:', newsId);
-  };
-
   const handleShare = async (news: News) => {
     if (navigator.share) {
       try {
@@ -147,8 +144,8 @@ export function TrendingNews() {
           <NewsCard
             key={item.id}
             news={item}
-            onLike={handleLike}
             onShare={handleShare}
+            onToggleSave={toggleSaveNews}
           />
         ))}
       </div>

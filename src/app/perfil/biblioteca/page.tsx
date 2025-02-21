@@ -33,10 +33,6 @@ export default function LibraryPage() {
               store.saveNews(newsId);
             }
           }}
-          onCheckSaved={async (newsId) => {
-            const { user } = useStore.getState();
-            return user?.savedNews.includes(newsId) || false;
-          }}
         />
       </div>
     </div>

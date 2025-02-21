@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import { News } from '@/types';
 import { Button } from '@/components/ui/Button';
 import {
@@ -12,16 +12,31 @@ import {
   CardTitle,
 } from '@/components/ui/Card';
 import { formatDate, truncateText } from '@/lib/utils';
+import useStore from '@/store/useStore';
 
 interface NewsCardProps {
   news: News;
-  onLike?: (newsId: string) => void;
   onShare?: (news: News) => void;
   onToggleSave?: (newsId: string) => Promise<void>;
-  onCheckSaved?: (newsId: string) => Promise<boolean>;
 }
 
-export function NewsCard({ news, onLike, onShare }: NewsCardProps) {
+export function NewsCard({ news, onShare, onToggleSave }: NewsCardProps) {
+  const user = useStore((state) => state.user);
+  const isSaved = user?.savedNews?.includes(news.id) || false;
+
+  const handleSave = async () => {
+    console.log('[NewsCard] Tentando salvar/remover:', {
+      newsId: news.id,
+      newsTitle: news.title,
+      currentSaveState: isSaved,
+      userSavedNews: user?.savedNews,
+    });
+
+    if (onToggleSave) {
+      await onToggleSave(news.id);
+    }
+  };
+
   return (
     <Card className="group overflow-hidden">
       <Link href={`/noticias/${news.slug}`}>
@@ -74,10 +89,10 @@ export function NewsCard({ news, onLike, onShare }: NewsCardProps) {
           variant="ghost"
           size="sm"
           className="gap-2"
-          onClick={() => onLike?.(news.id)}
+          onClick={handleSave}
         >
-          <Heart className="h-4 w-4" />
-          <span>{news.likes}</span>
+          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+          <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
         </Button>
         <Button variant="ghost" size="sm" className="gap-2" asChild>
           <Link href={`/noticias/${news.slug}#comentarios`}>

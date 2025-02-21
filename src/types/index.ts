@@ -1,22 +1,56 @@
+/**
+ * Representa um usuário do sistema.
+ * @remarks Esta interface é usada em todo o sistema para representar usuários.
+ */
 export type User = {
+  /** ID único do usuário (mesmo do Firebase Auth) */
   id: string;
+
+  /** Nome de exibição do usuário */
   name: string;
+
+  /** Email do usuário */
   email: string;
+
+  /** URL da foto do perfil */
   photoURL?: string;
-  role: 'user' | 'admin';
+
+  /** Função do usuário no sistema */
+  role: UserRole;
+
+  /** Data de criação da conta */
   createdAt: Date;
+
+  /** Nome de exibição alternativo (compatibilidade com Firebase) */
   displayName?: string;
+
+  /** ID alternativo (compatibilidade com Firebase) */
   uid?: string;
+
+  /** Metadados do usuário */
   metadata?: {
     creationTime?: string;
     lastSignInTime?: string;
   };
+
+  /** Preferências do usuário */
   preferences: UserPreferences;
+
+  /** IDs das notícias salvas */
   savedNews: string[];
+
+  /** Histórico de leitura */
   readHistory: ReadHistoryItem[];
+
+  /** Preferências da newsletter */
   newsletter: NewsletterPreferences;
+
+  /** Preferências de notificações push */
   pushNotifications: PushNotificationPreferences;
 };
+
+/** Possíveis funções de usuário no sistema */
+export type UserRole = 'user' | 'admin';
 
 export type UserPreferences = {
   categories: Category[];
@@ -56,7 +90,6 @@ export type News = {
     name: string;
     photoURL?: string;
   };
-  likes: number;
   comments: number;
   createdAt: Date;
   updatedAt: Date;
@@ -88,9 +121,3 @@ export type Category =
   | 'Saúde'
   | 'Educação'
   | 'Ciência';
-
-export type Like = {
-  userId: string;
-  newsId: string;
-  createdAt: Date;
-};
