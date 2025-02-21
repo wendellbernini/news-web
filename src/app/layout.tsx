@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Roboto } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
+import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -13,10 +14,6 @@ const roboto = Roboto({
   weight: ['400', '500', '700'],
   variable: '--font-roboto',
 });
-
-const SITE_NAME = 'Rio de Fato';
-const SITE_DESCRIPTION =
-  'Portal de notícias do Rio de Janeiro, trazendo as últimas informações com credibilidade e transparência.';
 
 export const metadata: Metadata = {
   title: SITE_NAME,

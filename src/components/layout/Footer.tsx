@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Facebook, Instagram, Twitter } from 'lucide-react';
+import { SITE_NAME, SITE_DESCRIPTION, SOCIAL_MEDIA } from '@/lib/constants';
 
 export function Footer() {
   return (
@@ -9,8 +10,7 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-semibold">Sobre</h3>
             <p className="mt-4 text-sm text-secondary-600 dark:text-secondary-400">
-              O NewsWeb é um portal de notícias moderno e confiável, trazendo as
-              últimas informações sobre diversos assuntos.
+              {SITE_DESCRIPTION}
             </p>
           </div>
 
@@ -94,7 +94,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold">Redes Sociais</h3>
             <div className="mt-4 flex space-x-4">
               <a
-                href="https://facebook.com"
+                href={SOCIAL_MEDIA.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-secondary-600 hover:text-primary-600 dark:text-secondary-400"
@@ -103,7 +103,7 @@ export function Footer() {
                 <span className="sr-only">Facebook</span>
               </a>
               <a
-                href="https://twitter.com"
+                href={SOCIAL_MEDIA.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-secondary-600 hover:text-primary-600 dark:text-secondary-400"
@@ -112,7 +112,7 @@ export function Footer() {
                 <span className="sr-only">Twitter</span>
               </a>
               <a
-                href="https://instagram.com"
+                href={SOCIAL_MEDIA.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-secondary-600 hover:text-primary-600 dark:text-secondary-400"
@@ -126,7 +126,8 @@ export function Footer() {
 
         <div className="mt-8 border-t border-secondary-200 pt-8 dark:border-secondary-800">
           <p className="text-center text-sm text-secondary-600 dark:text-secondary-400">
-            © {new Date().getFullYear()} NewsWeb. Todos os direitos reservados.
+            © {new Date().getFullYear()} {SITE_NAME}. Todos os direitos
+            reservados.
           </p>
         </div>
       </div>

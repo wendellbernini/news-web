@@ -8,6 +8,7 @@ import useStore from '@/store/useStore';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/user/UserMenu';
+import { SITE_NAME } from '@/lib/constants';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,7 +27,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-secondary-200 bg-white/80 backdrop-blur-sm dark:border-secondary-800 dark:bg-secondary-950/80">
       <div className="container flex h-16 items-center justify-between gap-4">
         <Link href="/" className="text-2xl font-bold text-primary-600">
-          NewsWeb
+          {SITE_NAME}
         </Link>
 
         <form
