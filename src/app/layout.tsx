@@ -14,15 +14,17 @@ const roboto = Roboto({
   variable: '--font-roboto',
 });
 
+const SITE_NAME = 'Rio de Fato';
+const SITE_DESCRIPTION =
+  'Portal de notícias do Rio de Janeiro, trazendo as últimas informações com credibilidade e transparência.';
+
 export const metadata: Metadata = {
-  title: 'NewsWeb - Portal de Notícias',
-  description:
-    'Portal de notícias moderno e confiável, trazendo as últimas informações sobre diversos assuntos.',
-  keywords:
-    'notícias, portal, jornalismo, atualidades, tecnologia, esportes, política',
-  authors: [{ name: 'NewsWeb' }],
-  creator: 'NewsWeb',
-  publisher: 'NewsWeb',
+  title: SITE_NAME,
+  description: SITE_DESCRIPTION,
+  keywords: 'notícias rio de janeiro, jornalismo, rj, rio de fato, atualidades',
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
   formatDetection: {
     email: false,
     address: false,
@@ -30,11 +32,10 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL('http://localhost:3000'),
   openGraph: {
-    title: 'NewsWeb - Portal de Notícias',
-    description:
-      'Portal de notícias moderno e confiável, trazendo as últimas informações sobre diversos assuntos.',
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     url: 'http://localhost:3000',
-    siteName: 'NewsWeb',
+    siteName: SITE_NAME,
     locale: 'pt_BR',
     type: 'website',
   },
@@ -50,12 +51,11 @@ export const metadata: Metadata = {
     },
   },
   twitter: {
-    title: 'NewsWeb - Portal de Notícias',
-    description:
-      'Portal de notícias moderno e confiável, trazendo as últimas informações sobre diversos assuntos.',
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
     card: 'summary_large_image',
-    creator: '@newsweb',
-    site: '@newsweb',
+    creator: '@riodefato',
+    site: '@riodefato',
   },
 };
 
