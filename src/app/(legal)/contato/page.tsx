@@ -57,7 +57,7 @@ export default function ContactPage() {
           <Mail className="mx-auto mb-4 h-8 w-8 text-primary-600" />
           <h3 className="mb-2 text-lg font-semibold">Email</h3>
           <p className="text-secondary-600 dark:text-secondary-400">
-            contato@newsweb.com
+            {SITE_INFO.email}
           </p>
         </div>
 
