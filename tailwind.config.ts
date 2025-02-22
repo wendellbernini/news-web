@@ -50,6 +50,15 @@ const config: Config = {
           '2xl': '1400px',
         },
       },
+      keyframes: {
+        'ticker-slide': {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
+      animation: {
+        'ticker-slide': 'ticker-slide 30s linear infinite',
+      },
     },
   },
   plugins: [require('@tailwindcss/typography'), require('@tailwindcss/forms')],

@@ -4,6 +4,7 @@ import { ReactNode, useEffect } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { NewsTicker } from './NewsTicker';
+import { StockTicker } from './StockTicker';
 import { Toaster } from 'react-hot-toast';
 import useStore from '@/store/useStore';
 
@@ -26,6 +27,7 @@ export function RootLayout({ children }: RootLayoutProps) {
       >
         <NewsTicker />
         <Header />
+        <StockTicker />
         <main className="flex-1">{children}</main>
         <Footer />
         <Toaster
