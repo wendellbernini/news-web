@@ -226,7 +226,7 @@ export function CommentSection({ newsSlug }: CommentSectionProps) {
       );
 
       const snapshot = await getDocs(commentsQuery);
-      const commentsData = snapshot.docs.map((doc) => {
+      const allComments = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -236,7 +236,29 @@ export function CommentSection({ newsSlug }: CommentSectionProps) {
         };
       }) as Comment[];
 
-      setComments(commentsData);
+      // Organiza comentários em estrutura hierárquica
+      const commentMap = new Map<string, Comment>();
+      const rootComments: Comment[] = [];
+
+      // Primeiro, mapeia todos os comentários por ID
+      allComments.forEach((comment) => {
+        commentMap.set(comment.id, { ...comment, replies: [] });
+      });
+
+      // Depois, organiza em estrutura de árvore
+      allComments.forEach((comment) => {
+        if (comment.parentId) {
+          const parentComment = commentMap.get(comment.parentId);
+          if (parentComment) {
+            parentComment.replies = parentComment.replies || [];
+            parentComment.replies.push(commentMap.get(comment.id)!);
+          }
+        } else {
+          rootComments.push(commentMap.get(comment.id)!);
+        }
+      });
+
+      setComments(rootComments);
     } catch (error) {
       console.error('Erro ao buscar comentários:', error);
       toast.error('Erro ao carregar comentários');
