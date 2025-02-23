@@ -102,7 +102,7 @@ git push origin main
 - ESLint para padronização
 - Prettier para formatação
 - TypeScript strict mode
-- Comentários explicativos em português
+- Adicione Comentários explicativos em português no código.
 
 3. Documentação
 - README atualizado

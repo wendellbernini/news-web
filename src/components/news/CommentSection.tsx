@@ -16,6 +16,7 @@ import {
   getDocs,
   deleteDoc,
   doc,
+  runTransaction,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { toast } from 'react-hot-toast';
@@ -23,6 +24,34 @@ import { toast } from 'react-hot-toast';
 interface CommentSectionProps {
   newsSlug: string;
 }
+
+const updateCommentCount = async (newsSlug: string, increment: number) => {
+  try {
+    // Primeiro encontra o documento da notícia pelo slug
+    const newsQuery = query(
+      collection(db, 'news'),
+      where('slug', '==', newsSlug)
+    );
+    const newsSnapshot = await getDocs(newsQuery);
+
+    if (!newsSnapshot.empty) {
+      const newsDoc = newsSnapshot.docs[0];
+
+      // Atualiza o contador de comentários
+      await runTransaction(db, async (transaction) => {
+        const newsRef = doc(db, 'news', newsDoc.id);
+        const newsData = (await transaction.get(newsRef)).data();
+
+        transaction.update(newsRef, {
+          comments: (newsData?.comments || 0) + increment,
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar contador de comentários:', error);
+    throw error;
+  }
+};
 
 export function CommentSection({ newsSlug }: CommentSectionProps) {
   const { user } = useAuth();
@@ -90,6 +119,9 @@ export function CommentSection({ newsSlug }: CommentSectionProps) {
       const docRef = await addDoc(collection(db, 'comments'), commentData);
       const newComment = { id: docRef.id, ...commentData };
 
+      // Atualiza o contador de comentários
+      await updateCommentCount(newsSlug, 1);
+
       setComments((prev) => [newComment, ...prev]);
       setContent('');
       toast.success('Comentário adicionado com sucesso!');
@@ -106,6 +138,10 @@ export function CommentSection({ newsSlug }: CommentSectionProps) {
 
     try {
       await deleteDoc(doc(db, 'comments', commentId));
+
+      // Atualiza o contador de comentários
+      await updateCommentCount(newsSlug, -1);
+
       setComments((prev) => prev.filter((comment) => comment.id !== commentId));
       toast.success('Comentário excluído com sucesso!');
     } catch (error) {

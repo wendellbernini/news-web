@@ -3,14 +3,7 @@ import Link from 'next/link';
 import { Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import { News } from '@/types';
 import { Button } from '@/components/ui/Button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/Card';
+import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
 import { formatDate, truncateText } from '@/lib/utils';
 import useStore from '@/store/useStore';
 
@@ -28,17 +21,12 @@ export function NewsCard({
   variant = 'default',
 }: NewsCardProps) {
   const user = useStore((state) => state.user);
-  const isInLibrary = window.location.pathname === '/perfil/biblioteca';
-  const isSaved = isInLibrary || user?.savedNews?.includes(news.id) || false;
+  const isSaved = user?.savedNews?.includes(news.id) || false;
 
   const handleSave = async () => {
-    console.log('[NewsCard] Tentando salvar/remover:', {
-      newsId: news.id,
-      newsTitle: news.title,
-      currentSaveState: isSaved,
-      userSavedNews: user?.savedNews,
-      pathname: window.location.pathname,
-    });
+    if (!user) {
+      return;
+    }
 
     if (onToggleSave) {
       await onToggleSave(news.id);
@@ -109,7 +97,7 @@ export function NewsCard({
   return (
     <Card className="group overflow-hidden">
       <Link href={`/noticias/${news.slug}`}>
-        <div className="relative aspect-video w-full overflow-hidden">
+        <div className="relative aspect-[16/9] w-full overflow-hidden">
           <Image
             src={news.imageUrl}
             alt={news.title}
@@ -124,14 +112,15 @@ export function NewsCard({
         </div>
       </Link>
 
-      <CardHeader>
+      <div className="p-4">
         <Link
           href={`/noticias/${news.slug}`}
           className="group-hover:text-primary-600"
         >
-          <CardTitle>{news.title}</CardTitle>
+          <h3 className="text-xl font-semibold">{news.title}</h3>
         </Link>
-        <CardDescription className="flex items-center gap-2 text-xs">
+
+        <div className="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
           <Image
             src={news.author.photoURL || '/images/avatar-placeholder.png'}
             alt={news.author.name}
@@ -144,40 +133,43 @@ export function NewsCard({
           <time dateTime={news.createdAt.toISOString()}>
             {formatDate(news.createdAt)}
           </time>
-        </CardDescription>
-      </CardHeader>
+        </div>
 
-      <CardContent>
-        <p className="text-sm text-secondary-600 dark:text-secondary-400">
+        <p className="mt-2 text-sm text-secondary-600 dark:text-secondary-400">
           {truncateText(news.summary, 150)}
         </p>
-      </CardContent>
 
-      <CardFooter className="gap-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="gap-2"
-          onClick={handleSave}
-        >
-          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-          <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
-        </Button>
-        <Button variant="ghost" size="sm" className="gap-2" asChild>
-          <Link href={`/noticias/${news.slug}#comentarios`}>
-            <MessageCircle className="h-4 w-4" />
-            <span>{news.comments}</span>
-          </Link>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto"
-          onClick={() => onShare?.(news)}
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-      </CardFooter>
+        <div className="mt-4 flex gap-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+            onClick={handleSave}
+          >
+            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+            <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
+          </Button>
+          <Button variant="ghost" size="sm" className="gap-2" asChild>
+            <Link
+              href={`/noticias/${news.slug}#comentarios`}
+              className="flex items-center"
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="pl-2 text-xs text-secondary-600 dark:text-secondary-400">
+                {news.comments || 0}
+              </span>
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            onClick={() => onShare?.(news)}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 }

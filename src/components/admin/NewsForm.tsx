@@ -27,7 +27,7 @@ interface NewsFormProps {
   newsId?: string;
 }
 
-type NewsData = {
+interface NewsData {
   title: string;
   summary: string;
   content: string;
@@ -38,14 +38,15 @@ type NewsData = {
   author: {
     id: string;
     name: string;
-    photoURL: string;
+    photoURL?: string;
   };
-  updatedAt: Date;
   createdAt?: Date;
+  updatedAt: Date;
   likes?: number;
   views?: number;
+  comments?: number;
   [key: string]: any;
-};
+}
 
 export function NewsForm({ newsId }: NewsFormProps) {
   const router = useRouter();
@@ -196,6 +197,7 @@ export function NewsForm({ newsId }: NewsFormProps) {
         newsData.createdAt = new Date();
         newsData.likes = 0;
         newsData.views = 0;
+        newsData.comments = 0;
         await addDoc(collection(db, 'news'), newsData);
         toast.success('Notícia criada com sucesso!');
       }

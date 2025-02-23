@@ -55,15 +55,15 @@ function SearchResults() {
         {query ? `Resultados para "${query}"` : 'Todas as notícias'}
       </h1>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-col gap-4">
         {loading && (
-          <div className="col-span-full flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
           </div>
         )}
 
         {!loading && results.length === 0 && query && (
-          <p className="col-span-full text-center text-secondary-500">
+          <p className="text-center text-secondary-500">
             Nenhuma notícia encontrada para "{query}"
           </p>
         )}

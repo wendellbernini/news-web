@@ -59,7 +59,8 @@ interface StoreState {
 const useStore = create<StoreState>((set) => ({
   // Auth
   user: null,
-  setUser: (user) => set({ user }),
+  setUser: (user) =>
+    set({ user: user ? { ...user, savedNews: user.savedNews || [] } : null }),
 
   // Theme
   isDarkMode: false,
@@ -108,7 +109,7 @@ const useStore = create<StoreState>((set) => ({
       user: state.user
         ? {
             ...state.user,
-            savedNews: [...state.user.savedNews, newsId],
+            savedNews: [...(state.user.savedNews || []), newsId],
           }
         : null,
     })),
@@ -117,7 +118,9 @@ const useStore = create<StoreState>((set) => ({
       user: state.user
         ? {
             ...state.user,
-            savedNews: state.user.savedNews.filter((id) => id !== newsId),
+            savedNews: (state.user.savedNews || []).filter(
+              (id) => id !== newsId
+            ),
           }
         : null,
     })),

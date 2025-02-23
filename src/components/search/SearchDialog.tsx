@@ -105,6 +105,7 @@ export function SearchDialog() {
                       news={news}
                       onShare={handleShare}
                       onToggleSave={toggleSaveNews}
+                      variant="compact"
                     />
                   ))}
               </div>
