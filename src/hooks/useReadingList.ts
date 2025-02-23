@@ -11,7 +11,6 @@ import {
   getDocs,
   addDoc,
   deleteDoc,
-  doc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
@@ -48,6 +47,11 @@ export const useReadingList = () => {
           (doc) => doc.data().newsId
         );
 
+        console.log('[useReadingList] Notícias salvas encontradas:', {
+          count: savedNewsIds.length,
+          ids: savedNewsIds,
+        });
+
         // Atualiza o estado do usuário com as notícias salvas do Firestore
         setUser({
           ...user,
@@ -58,7 +62,7 @@ export const useReadingList = () => {
         if (savedNewsIds.length > 0) {
           const newsQuery = query(
             collection(db, 'news'),
-            where('id', 'in', savedNewsIds)
+            where('__name__', 'in', savedNewsIds)
           );
 
           const snapshot = await getDocs(newsQuery);
@@ -67,12 +71,14 @@ export const useReadingList = () => {
             ...doc.data(),
           })) as News[];
 
-          console.log('[useReadingList] Notícias carregadas:', {
+          console.log('[useReadingList] Detalhes das notícias carregados:', {
             count: newsData.length,
             ids: newsData.map((n) => n.id),
           });
 
           setSavedNewsList(newsData);
+        } else {
+          setSavedNewsList([]);
         }
       } catch (error) {
         console.error('[useReadingList] Erro ao carregar notícias:', error);
@@ -83,7 +89,7 @@ export const useReadingList = () => {
     };
 
     fetchSavedNews();
-  }, [user?.id]);
+  }, [user?.id, setUser]);
 
   // Carrega o histórico de leitura
   useEffect(() => {
@@ -128,6 +134,7 @@ export const useReadingList = () => {
       newsId,
       userId: user?.id,
       currentSavedNews: user?.savedNews,
+      isInLibrary: window.location.pathname === '/perfil/biblioteca',
     });
 
     if (!user) {
@@ -135,13 +142,17 @@ export const useReadingList = () => {
       return;
     }
 
-    const isSaved = user.savedNews.includes(newsId);
+    // Se estamos na biblioteca, a notícia está salva por definição
+    const isSaved =
+      window.location.pathname === '/perfil/biblioteca' ||
+      user.savedNews.includes(newsId);
+    console.log('[useReadingList] Estado da notícia:', { isSaved, newsId });
 
     try {
       if (isSaved) {
         console.log('[useReadingList] Removendo notícia:', newsId);
 
-        // Remove do Zustand
+        // Remove do Zustand primeiro
         unsaveNews(newsId);
         setSavedNewsList((prev) => prev.filter((news) => news.id !== newsId));
 
@@ -154,15 +165,26 @@ export const useReadingList = () => {
 
         const snapshot = await getDocs(savedNewsQuery);
         if (!snapshot.empty) {
-          await deleteDoc(doc(db, 'savedNews', snapshot.docs[0].id));
+          await Promise.all(snapshot.docs.map((doc) => deleteDoc(doc.ref)));
         }
 
         console.log('[useReadingList] Notícia removida com sucesso');
         toast.success('Notícia removida dos salvos');
+
+        // Atualiza o estado do usuário
+        setUser({
+          ...user,
+          savedNews: user.savedNews.filter((id) => id !== newsId),
+        });
+
+        // Se estamos na biblioteca, precisamos atualizar a lista
+        if (window.location.pathname === '/perfil/biblioteca') {
+          setSavedNewsList((prev) => prev.filter((news) => news.id !== newsId));
+        }
       } else {
         console.log('[useReadingList] Salvando notícia:', newsId);
 
-        // Salva no Zustand
+        // Salva no Zustand primeiro
         saveNews(newsId);
 
         // Salva no Firestore
@@ -177,7 +199,7 @@ export const useReadingList = () => {
         // Busca os detalhes da notícia se ainda não estiver na lista
         if (!savedNewsList.find((news) => news.id === newsId)) {
           const newsDoc = await getDocs(
-            query(collection(db, 'news'), where('id', '==', newsId))
+            query(collection(db, 'news'), where('__name__', '==', newsId))
           );
           if (!newsDoc.empty) {
             const newsData = {
@@ -191,6 +213,14 @@ export const useReadingList = () => {
         console.log('[useReadingList] Notícia salva com sucesso');
         toast.success('Notícia salva com sucesso!');
       }
+
+      // Atualiza o estado do usuário para manter sincronizado
+      setUser({
+        ...user,
+        savedNews: isSaved
+          ? user.savedNews.filter((id) => id !== newsId)
+          : [...user.savedNews, newsId],
+      });
     } catch (error) {
       console.error('[useReadingList] Erro ao salvar/remover notícia:', error);
       toast.error('Erro ao salvar/remover notícia');

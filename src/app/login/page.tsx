@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   signInWithEmailAndPassword,
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { FirebaseError } from 'firebase/app';
 import { useAuth } from '@/hooks/useAuth';
+import { Loader2 } from 'lucide-react';
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -21,13 +22,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const { user } = useAuth();
 
-  // Redireciona se já estiver logado
-  if (user) {
-    router.push('/');
-    return null;
-  }
+  useEffect(() => {
+    // Aguarda um momento para garantir que o estado de autenticação foi carregado
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+      if (user) {
+        router.push('/');
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [user, router]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -89,6 +97,18 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (isInitializing) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center py-8">

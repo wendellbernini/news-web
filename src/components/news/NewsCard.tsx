@@ -28,7 +28,8 @@ export function NewsCard({
   variant = 'default',
 }: NewsCardProps) {
   const user = useStore((state) => state.user);
-  const isSaved = user?.savedNews?.includes(news.id) || false;
+  const isInLibrary = window.location.pathname === '/perfil/biblioteca';
+  const isSaved = isInLibrary || user?.savedNews?.includes(news.id) || false;
 
   const handleSave = async () => {
     console.log('[NewsCard] Tentando salvar/remover:', {
@@ -36,6 +37,7 @@ export function NewsCard({
       newsTitle: news.title,
       currentSaveState: isSaved,
       userSavedNews: user?.savedNews,
+      pathname: window.location.pathname,
     });
 
     if (onToggleSave) {
@@ -81,12 +83,13 @@ export function NewsCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2"
+                className="h-8 gap-1 px-2"
                 onClick={handleSave}
               >
                 <Bookmark
                   className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`}
                 />
+                <span className="text-xs">{isSaved ? 'Salvo' : 'Salvar'}</span>
               </Button>
               <Button
                 variant="ghost"
