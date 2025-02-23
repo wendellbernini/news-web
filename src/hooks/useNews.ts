@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   collection,
   query,
@@ -192,47 +192,64 @@ export const useNews = () => {
     }
   };
 
-  const searchNews = async (searchQuery: string) => {
-    setLoading(true);
-    try {
-      // Nota: Esta é uma implementação básica de busca.
-      // Para uma busca mais robusta, considere usar Algolia ou ElasticSearch
-      const newsQuery = query(
-        collection(db, 'news'),
-        where('published', '==', true),
-        orderBy('title'),
-        limit(20)
-      );
+  const searchNews = useCallback(
+    async (searchQuery: string) => {
+      console.log('[Debug] searchNews chamado com query:', searchQuery);
 
-      const snapshot = await getDocs(newsQuery);
-      const newsData = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.seconds
-            ? new Date(data.createdAt.seconds * 1000)
-            : new Date(),
-          updatedAt: data.updatedAt?.seconds
-            ? new Date(data.updatedAt.seconds * 1000)
-            : new Date(),
-        };
-      }) as News[];
+      // Se a query estiver vazia, apenas limpa os resultados
+      if (!searchQuery.trim()) {
+        console.log('[Debug] Query vazia, limpando resultados');
+        setNews([]);
+        return;
+      }
 
-      const filteredNews = newsData.filter(
-        (news) =>
-          news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          news.content.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      setLoading(true);
+      try {
+        console.log('[Debug] Iniciando busca no Firestore');
+        // Nota: Esta é uma implementação básica de busca.
+        // Para uma busca mais robusta, considere usar Algolia ou ElasticSearch
+        const newsQuery = query(
+          collection(db, 'news'),
+          where('published', '==', true),
+          orderBy('title'),
+          limit(20)
+        );
 
-      setNews(filteredNews);
-    } catch (error) {
-      console.error('Erro ao buscar notícias:', error);
-      toast.error('Erro ao buscar notícias');
-    } finally {
-      setLoading(false);
-    }
-  };
+        const snapshot = await getDocs(newsQuery);
+        const newsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: data.createdAt?.seconds
+              ? new Date(data.createdAt.seconds * 1000)
+              : new Date(),
+            updatedAt: data.updatedAt?.seconds
+              ? new Date(data.updatedAt.seconds * 1000)
+              : new Date(),
+          };
+        }) as News[];
+
+        // Filtra as notícias localmente
+        const searchQueryLower = searchQuery.toLowerCase();
+        const filteredNews = newsData.filter(
+          (news) =>
+            news.title.toLowerCase().includes(searchQueryLower) ||
+            news.content.toLowerCase().includes(searchQueryLower)
+        );
+
+        // Só atualiza o estado se houver mudanças
+        setNews(filteredNews);
+      } catch (error) {
+        console.error('Erro ao buscar notícias:', error);
+        toast.error('Erro ao buscar notícias');
+        setNews([]); // Limpa os resultados em caso de erro
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setNews, setLoading]
+  );
 
   return {
     news,

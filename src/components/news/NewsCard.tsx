@@ -18,9 +18,15 @@ interface NewsCardProps {
   news: News;
   onShare?: (news: News) => void;
   onToggleSave?: (newsId: string) => Promise<void>;
+  variant?: 'default' | 'compact';
 }
 
-export function NewsCard({ news, onShare, onToggleSave }: NewsCardProps) {
+export function NewsCard({
+  news,
+  onShare,
+  onToggleSave,
+  variant = 'default',
+}: NewsCardProps) {
   const user = useStore((state) => state.user);
   const isSaved = user?.savedNews?.includes(news.id) || false;
 
@@ -36,6 +42,66 @@ export function NewsCard({ news, onShare, onToggleSave }: NewsCardProps) {
       await onToggleSave(news.id);
     }
   };
+
+  if (variant === 'compact') {
+    return (
+      <Card className="group overflow-hidden">
+        <div className="flex gap-4">
+          <Link
+            href={`/noticias/${news.slug}`}
+            className="relative h-24 w-32 shrink-0 overflow-hidden"
+          >
+            <Image
+              src={news.imageUrl}
+              alt={news.title}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="128px"
+            />
+          </Link>
+          <div className="flex flex-col justify-between py-2">
+            <div>
+              <Link
+                href={`/noticias/${news.slug}`}
+                className="group-hover:text-primary-600"
+              >
+                <CardTitle className="line-clamp-2 text-base">
+                  {news.title}
+                </CardTitle>
+              </Link>
+              <CardDescription className="mt-1 flex items-center gap-2 text-xs">
+                <time dateTime={news.createdAt.toISOString()}>
+                  {formatDate(news.createdAt)}
+                </time>
+                <span>•</span>
+                <span>{news.category}</span>
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={handleSave}
+              >
+                <Bookmark
+                  className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`}
+                />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => onShare?.(news)}
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="group overflow-hidden">

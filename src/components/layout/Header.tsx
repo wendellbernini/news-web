@@ -9,18 +9,24 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/user/UserMenu';
 import { SITE_NAME } from '@/lib/constants';
+import { useRouter } from 'next/navigation';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useStore();
   const { signInWithGoogle } = useAuth();
+  const router = useRouter();
 
   console.log('Header rendering, user:', user); // Debug log
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implementar a busca
+    if (searchQuery.trim()) {
+      // Redireciona para a página de resultados com a query como parâmetro
+      router.push(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery(''); // Limpa o campo após a busca
+    }
   };
 
   return (
@@ -35,16 +41,21 @@ export function Header() {
           className="hidden flex-1 items-center gap-2 md:flex"
         >
           <div className="relative max-w-md flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-500" />
             <Input
               type="search"
               placeholder="Buscar notícias..."
-              className="pl-9"
+              className="pl-3 pr-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-secondary-500 transition-colors hover:text-primary-600"
+              aria-label="Buscar"
+            >
+              <Search className="h-5 w-5" />
+            </button>
           </div>
-          <Button type="submit">Buscar</Button>
         </form>
 
         <nav className="hidden items-center gap-4 md:flex">
@@ -82,14 +93,20 @@ export function Header() {
         <div className="container pb-4 md:hidden">
           <form onSubmit={handleSearch} className="mb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary-500" />
               <Input
                 type="search"
                 placeholder="Buscar notícias..."
-                className="pl-9"
+                className="pl-3 pr-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-secondary-500 transition-colors hover:text-primary-600"
+                aria-label="Buscar"
+              >
+                <Search className="h-5 w-5" />
+              </button>
             </div>
           </form>
 

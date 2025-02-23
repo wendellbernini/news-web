@@ -22,7 +22,6 @@ export default function ContactPage() {
 
     try {
       // Aqui você implementaria a lógica de envio do formulário
-      // Por exemplo, enviando para uma API ou serviço de email
       await new Promise((resolve) => setTimeout(resolve, 1000));
       toast.success('Mensagem enviada com sucesso!');
       setFormData({ name: '', email: '', subject: '', message: '' });
@@ -41,15 +40,6 @@ export default function ContactPage() {
           Estamos aqui para ouvir você. Entre em contato conosco através dos
           canais abaixo ou preencha o formulário.
         </p>
-        <p className="mb-4 text-gray-600">
-          Você também pode entrar em contato diretamente através do e-mail:{' '}
-          <a
-            href={`mailto:${SITE_INFO.email}`}
-            className="text-primary-600 hover:underline"
-          >
-            {SITE_INFO.email}
-          </a>
-        </p>
       </div>
 
       <div className="mb-12 grid gap-8 md:grid-cols-3">
@@ -65,7 +55,7 @@ export default function ContactPage() {
           <Phone className="mx-auto mb-4 h-8 w-8 text-primary-600" />
           <h3 className="mb-2 text-lg font-semibold">Telefone</h3>
           <p className="text-secondary-600 dark:text-secondary-400">
-            (11) 99999-9999
+            {SITE_INFO.phone}
           </p>
         </div>
 
@@ -73,9 +63,7 @@ export default function ContactPage() {
           <MapPin className="mx-auto mb-4 h-8 w-8 text-primary-600" />
           <h3 className="mb-2 text-lg font-semibold">Endereço</h3>
           <p className="text-secondary-600 dark:text-secondary-400">
-            Rio de Janeiro, RJ
-            <br />
-            Brasil
+            {SITE_INFO.address}
           </p>
         </div>
       </div>
