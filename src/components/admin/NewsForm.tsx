@@ -117,16 +117,11 @@ export function NewsForm({ newsId }: NewsFormProps) {
         const imageFormData = new FormData();
         imageFormData.append('file', imageFile);
         imageFormData.append('upload_preset', 'news-web');
-        imageFormData.append(
-          'cloud_name',
-          process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || ''
-        );
 
-        console.log('Iniciando upload para o Cloudinary...');
+        console.log('[Debug] Iniciando upload para o Cloudinary...');
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
         const response = await fetch(
-          'https://api.cloudinary.com/v1_1/' +
-            process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME +
-            '/image/upload',
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
           {
             method: 'POST',
             body: imageFormData,
@@ -135,7 +130,7 @@ export function NewsForm({ newsId }: NewsFormProps) {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Erro do Cloudinary:', errorData);
+          console.error('[Debug] Erro do Cloudinary:', errorData);
           throw new Error(
             `Erro ao fazer upload da imagem: ${errorData.error?.message || response.statusText}`
           );
