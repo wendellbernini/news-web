@@ -1,3 +1,5 @@
+import { Category } from '@/types';
+
 export const SITE_NAME = 'Rio de Fato';
 export const SITE_DESCRIPTION =
   'Portal de notícias do Rio de Janeiro, trazendo as últimas informações com credibilidade e transparência.';
@@ -22,4 +24,15 @@ export const LEGAL = {
   company: 'Rio de Fato Comunicações LTDA',
   cnpj: '00.000.000/0001-00',
   copyright: `© ${new Date().getFullYear()} ${SITE_NAME}`,
+};
+
+export const CATEGORIES: Record<string, Category> = {
+  tecnologia: 'Tecnologia',
+  esportes: 'Esportes',
+  politica: 'Política',
+  economia: 'Economia',
+  entretenimento: 'Entretenimento',
+  saude: 'Saúde',
+  educacao: 'Educação',
+  ciencia: 'Ciência',
 };

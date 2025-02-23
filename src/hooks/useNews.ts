@@ -37,101 +37,88 @@ export const useNews = () => {
   } = useStore();
   const { createNotificationsForNews } = useNotifications();
 
-  const fetchNews = async (category?: Category) => {
-    setLoading(true);
-    try {
-      let newsQuery = query(
-        collection(db, 'news'),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc'),
-        limit(ITEMS_PER_PAGE)
-      );
-
-      if (category) {
-        newsQuery = query(
+  const fetchNews = useCallback(
+    async (category?: Category) => {
+      setLoading(true);
+      try {
+        const baseQuery = query(
           collection(db, 'news'),
           where('published', '==', true),
-          where('category', '==', category),
           orderBy('createdAt', 'desc'),
           limit(ITEMS_PER_PAGE)
         );
-      }
 
-      const snapshot = await getDocs(newsQuery);
-      const news = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
+        const newsQuery = category
+          ? query(baseQuery, where('category', '==', category))
+          : baseQuery;
+
+        const snapshot = await getDocs(newsQuery);
+        const fetchedNews = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.seconds
-            ? new Date(data.createdAt.seconds * 1000)
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.seconds
+            ? new Date(doc.data().createdAt.seconds * 1000)
             : new Date(),
-          updatedAt: data.updatedAt?.seconds
-            ? new Date(data.updatedAt.seconds * 1000)
+          updatedAt: doc.data().updatedAt?.seconds
+            ? new Date(doc.data().updatedAt.seconds * 1000)
             : new Date(),
-        };
-      }) as News[];
+        })) as News[];
 
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-      setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
-      setNews(news);
-    } catch (error) {
-      console.error('Erro ao buscar notícias:', error);
-      toast.error('Erro ao carregar notícias');
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
+        setNews(fetchedNews);
+      } catch (error) {
+        console.error('Erro ao buscar notícias:', error);
+        toast.error('Erro ao carregar notícias');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setNews]
+  );
 
-  const fetchMoreNews = async (category?: Category) => {
-    if (!lastDoc) return;
+  const fetchMoreNews = useCallback(
+    async (category?: Category) => {
+      if (!lastDoc) return;
 
-    setLoading(true);
-    try {
-      let newsQuery = query(
-        collection(db, 'news'),
-        where('published', '==', true),
-        orderBy('createdAt', 'desc'),
-        startAfter(lastDoc),
-        limit(ITEMS_PER_PAGE)
-      );
-
-      if (category) {
-        newsQuery = query(
+      setLoading(true);
+      try {
+        const baseQuery = query(
           collection(db, 'news'),
           where('published', '==', true),
-          where('category', '==', category),
           orderBy('createdAt', 'desc'),
           startAfter(lastDoc),
           limit(ITEMS_PER_PAGE)
         );
-      }
 
-      const snapshot = await getDocs(newsQuery);
-      const moreNews = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
+        const newsQuery = category
+          ? query(baseQuery, where('category', '==', category))
+          : baseQuery;
+
+        const snapshot = await getDocs(newsQuery);
+        const moreNews = snapshot.docs.map((doc) => ({
           id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.seconds
-            ? new Date(data.createdAt.seconds * 1000)
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.seconds
+            ? new Date(doc.data().createdAt.seconds * 1000)
             : new Date(),
-          updatedAt: data.updatedAt?.seconds
-            ? new Date(data.updatedAt.seconds * 1000)
+          updatedAt: doc.data().updatedAt?.seconds
+            ? new Date(doc.data().updatedAt.seconds * 1000)
             : new Date(),
-        };
-      }) as News[];
+        })) as News[];
 
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-      setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
-      setNews([...news, ...moreNews]);
-    } catch (error) {
-      console.error('Erro ao buscar mais notícias:', error);
-      toast.error('Erro ao carregar mais notícias');
-    } finally {
-      setLoading(false);
-    }
-  };
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+        setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
+        setNews([...news, ...moreNews]);
+      } catch (error) {
+        console.error('Erro ao buscar mais notícias:', error);
+        toast.error('Erro ao carregar mais notícias');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [lastDoc, news, setNews]
+  );
 
   const getNewsById = async (id: string) => {
     try {

@@ -1,23 +1,55 @@
-'use client';
-
-import { RootLayout } from '@/components/layout/RootLayout';
+import { CATEGORIES } from '@/lib/constants';
 import { CategoryNews } from '@/components/news/CategoryNews';
 import { Category } from '@/types';
+import { Metadata } from 'next';
 
-export default function CategoryPage({ params }: any) {
-  const categoria = params.categoria as Category;
+type Params = Promise<{ categoria: string }>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const resolvedParams = await params;
+  const category = CATEGORIES[resolvedParams.categoria];
+
+  if (!category) {
+    return {
+      title: 'Categoria não encontrada | Rio de Fato',
+      description: 'A categoria solicitada não existe.',
+    };
+  }
+
+  return {
+    title: `${category} | Rio de Fato`,
+    description: `Últimas notícias sobre ${category.toLowerCase()}`,
+  };
+}
+
+// Garantindo que as categorias são geradas estaticamente
+export function generateStaticParams() {
+  return Object.keys(CATEGORIES).map((categoria) => ({
+    categoria,
+  }));
+}
+
+export default async function Page({ params }: { params: Params }) {
+  const resolvedParams = await params;
+  const category = CATEGORIES[resolvedParams.categoria];
+
+  if (!category) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="mb-4 text-3xl font-bold">Categoria não encontrada</h1>
+        <p className="text-gray-600">A categoria solicitada não existe.</p>
+      </div>
+    );
+  }
 
   return (
-    <RootLayout>
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold">{categoria}</h1>
-          <p className="mt-2 text-secondary-600 dark:text-secondary-400">
-            Últimas notícias sobre {categoria.toLowerCase()}
-          </p>
-        </div>
-        <CategoryNews category={categoria} />
-      </div>
-    </RootLayout>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="mb-4 text-3xl font-bold">{category}</h1>
+      <CategoryNews category={category as Category} />
+    </div>
   );
 }
