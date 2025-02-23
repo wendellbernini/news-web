@@ -18,6 +18,7 @@ import {
 import { db } from '@/lib/firebase/config';
 import { News, Category } from '@/types';
 import useStore from '@/store/useStore';
+import { useNotifications } from '@/hooks/useNotifications';
 import { toast } from 'react-hot-toast';
 
 const ITEMS_PER_PAGE = 10;
@@ -34,6 +35,7 @@ export const useNews = () => {
     updateNews: updateNewsInStore,
     deleteNews: deleteNewsFromStore,
   } = useStore();
+  const { createNotificationsForNews } = useNotifications();
 
   const fetchNews = async (category?: Category) => {
     setLoading(true);
@@ -157,13 +159,35 @@ export const useNews = () => {
 
   const addNews = async (newsData: Omit<News, 'id'>) => {
     try {
+      console.log('[Debug] Iniciando criação de notícia:', {
+        title: newsData.title,
+        category: newsData.category,
+        published: newsData.published,
+      });
+
       const docRef = await addDoc(collection(db, 'news'), newsData);
       const newNews = { id: docRef.id, ...newsData };
       addNewsToStore(newNews);
+
+      // Se a notícia for publicada, cria notificações para usuários interessados
+      if (newsData.published) {
+        console.log('[Debug] Notícia publicada, criando notificações', {
+          newsId: docRef.id,
+          category: newsData.category,
+        });
+
+        await createNotificationsForNews(
+          docRef.id,
+          newsData.title,
+          newsData.category,
+          `/noticias/${newsData.slug}`
+        );
+      }
+
       toast.success('Notícia criada com sucesso!');
       return newNews;
     } catch (error) {
-      console.error('Erro ao adicionar notícia:', error);
+      console.error('[Debug] Erro ao criar notícia:', error);
       toast.error('Erro ao criar notícia');
       return null;
     }
@@ -172,8 +196,26 @@ export const useNews = () => {
   const updateNews = async (id: string, newsData: Partial<News>) => {
     try {
       const docRef = doc(db, 'news', id);
+      const currentDoc = await getDoc(docRef);
+      const currentData = currentDoc.data() as News;
+
       await updateDoc(docRef, newsData);
       updateNewsInStore({ id, ...newsData } as News);
+
+      // Se a notícia foi publicada agora, cria notificações
+      if (
+        newsData.published &&
+        !currentData.published &&
+        currentData.category
+      ) {
+        await createNotificationsForNews(
+          id,
+          newsData.title || currentData.title,
+          currentData.category,
+          `/noticias/${currentData.slug}`
+        );
+      }
+
       toast.success('Notícia atualizada com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar notícia:', error);

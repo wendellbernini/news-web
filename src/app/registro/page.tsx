@@ -53,7 +53,7 @@ export default function RegisterPage() {
         },
         pushNotifications: {
           enabled: false,
-          categories: [] as Category[],
+          categories: [],
           breakingNews: true,
           newArticles: true,
         },
@@ -113,7 +113,7 @@ export default function RegisterPage() {
         },
         pushNotifications: {
           enabled: false,
-          categories: [] as Category[],
+          categories: [],
           breakingNews: true,
           newArticles: true,
         },

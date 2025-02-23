@@ -70,13 +70,6 @@ export type NewsletterPreferences = {
   categories: Category[];
 };
 
-export type PushNotificationPreferences = {
-  enabled: boolean;
-  categories: Category[];
-  breakingNews: boolean;
-  newArticles: boolean;
-};
-
 export type News = {
   id: string;
   title: string;
@@ -123,3 +116,59 @@ export type Category =
   | 'Saúde'
   | 'Educação'
   | 'Ciência';
+
+/**
+ * Representa uma notificação do sistema
+ * @remarks Usado para notificar usuários sobre novas notícias em suas categorias de interesse
+ */
+export type Notification = {
+  /** ID único da notificação */
+  id: string;
+
+  /** ID do usuário que receberá a notificação */
+  userId: string;
+
+  /** ID da notícia relacionada */
+  newsId: string;
+
+  /** Título da notícia */
+  newsTitle: string;
+
+  /** Categoria da notícia */
+  category: Category;
+
+  /** Data de criação da notificação */
+  createdAt: Date;
+
+  /** Se a notificação foi lida */
+  read: boolean;
+
+  /** Link para a notícia */
+  link: string;
+};
+
+/**
+ * Representa o estado de notificações do usuário
+ */
+export type NotificationState = {
+  /** Total de notificações não lidas */
+  unreadCount: number;
+
+  /** Lista de notificações */
+  notifications: Notification[];
+
+  /** Data da última verificação */
+  lastChecked: Date;
+};
+
+/** Preferências de notificações push */
+export type PushNotificationPreferences = {
+  /** Se as notificações push estão habilitadas */
+  enabled: boolean;
+  /** Categorias selecionadas para notificações */
+  categories: Category[];
+  /** Se deseja receber notificações de breaking news */
+  breakingNews: boolean;
+  /** Se deseja receber notificações de novos artigos */
+  newArticles: boolean;
+};

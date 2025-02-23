@@ -1,81 +1,120 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Category } from '@/types';
+import { useUserPreferences } from '@/hooks/useUserPreferences';
+import useStore from '@/store/useStore';
+
+const categories: Category[] = [
+  'Tecnologia',
+  'Esportes',
+  'Política',
+  'Economia',
+  'Entretenimento',
+  'Saúde',
+  'Educação',
+  'Ciência',
+];
 
 export default function ConfiguracoesPage() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user } = useStore();
+  const {
+    loading: prefsLoading,
+    preferences,
+    updateCategories,
+    toggleDarkMode,
+    toggleEmailNotifications,
+  } = useUserPreferences();
 
-  if (!user) {
-    return (
-      <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-        <p className="text-center text-secondary-600 dark:text-secondary-400">
-          Faça login para acessar suas configurações
-        </p>
-      </div>
-    );
+  useEffect(() => {
+    if (!user) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  if (!user || !preferences) {
+    return null;
   }
 
   return (
     <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold">Configurações</h1>
-        <p className="mt-2 text-secondary-600 dark:text-secondary-400">
-          Gerencie suas configurações de conta
-        </p>
-      </div>
+      <div className="mx-auto max-w-3xl">
+        <h1 className="mb-8 text-3xl font-bold">Configurações</h1>
 
-      <div className="space-y-8">
-        <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-          <h2 className="mb-4 text-xl font-bold">Informações da Conta</h2>
-          <div className="space-y-4">
+        {/* Notificações */}
+        <section className="mb-8 rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
+          <h2 className="mb-4 text-xl font-semibold">Notificações</h2>
+
+          <div className="space-y-6">
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300">
-                Email
+              <label className="flex cursor-pointer items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={preferences.emailNotifications}
+                  onChange={toggleEmailNotifications}
+                  disabled={prefsLoading}
+                  className="h-4 w-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-600"
+                />
+                <span>Receber notificações por email</span>
               </label>
-              <p className="mt-1 text-secondary-600 dark:text-secondary-400">
-                {user.email}
+            </div>
+
+            {/* Categorias de Interesse */}
+            <div>
+              <h3 className="mb-3 text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                Categorias para Receber Notificações
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {categories.map((category) => (
+                  <label
+                    key={category}
+                    className="flex cursor-pointer items-center gap-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={preferences.categories.includes(category)}
+                      onChange={() => {
+                        const newCategories = preferences.categories.includes(
+                          category
+                        )
+                          ? preferences.categories.filter((c) => c !== category)
+                          : [...preferences.categories, category];
+                        updateCategories(newCategories);
+                      }}
+                      disabled={prefsLoading}
+                      className="h-4 w-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-600"
+                    />
+                    <span className="text-sm">{category}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-secondary-600 dark:text-secondary-400">
+                Você receberá notificações de novas notícias nas categorias
+                selecionadas
               </p>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-          <h2 className="mb-4 text-xl font-bold">
-            Preferências de Notificação
-          </h2>
+        {/* Tema */}
+        <section className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
+          <h2 className="mb-4 text-xl font-semibold">Tema</h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Notificações por Email</p>
-                <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                  Receba atualizações sobre notícias e comentários
-                </p>
-              </div>
-              <label className="relative inline-flex cursor-pointer items-center">
-                <input type="checkbox" className="peer sr-only" />
-                <div className="h-6 w-11 rounded-full bg-secondary-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-secondary-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:peer-focus:ring-primary-800"></div>
-              </label>
-            </div>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={preferences.darkMode}
+                onChange={toggleDarkMode}
+                disabled={prefsLoading}
+                className="h-4 w-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-600"
+              />
+              <span>Modo escuro</span>
+            </label>
           </div>
-        </div>
-
-        <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-          <h2 className="mb-4 text-xl font-bold">Privacidade</h2>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Perfil Público</p>
-                <p className="text-sm text-secondary-600 dark:text-secondary-400">
-                  Permitir que outros usuários vejam seu perfil
-                </p>
-              </div>
-              <label className="relative inline-flex cursor-pointer items-center">
-                <input type="checkbox" className="peer sr-only" />
-                <div className="h-6 w-11 rounded-full bg-secondary-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-secondary-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:peer-focus:ring-primary-800"></div>
-              </label>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );

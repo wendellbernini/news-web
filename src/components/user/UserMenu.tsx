@@ -10,32 +10,37 @@ import {
   LogOut,
   Bookmark,
   History,
-  Bell,
   Mail,
   ChevronDown,
   Loader2,
   LayoutDashboard,
   Check,
   LogIn,
+  Bell,
 } from 'lucide-react';
 import { useNewsletter } from '@/hooks/useNewsletter';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useState, useEffect, useRef } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useRouter } from 'next/navigation';
 
 export function UserMenu() {
   const { user, logout, signInWithGoogle, loading: authLoading } = useAuth();
   const { isSubscribed, subscribe, unsubscribe } = useNewsletter();
   const {
-    isEnabled: pushEnabled,
-    isSupported,
-    requestPermission,
-    permission,
-  } = usePushNotifications();
+    notifications,
+    unreadCount,
+    loading: notificationsLoading,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isNewsletterOpen, setIsNewsletterOpen] = useState(false);
   const [isLoginMenuOpen, setIsLoginMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   // Refs para os menus dropdown
   const menuRef = useRef<HTMLDivElement>(null);
@@ -154,58 +159,96 @@ export function UserMenu() {
   return (
     <div className="relative">
       <div className="flex items-center gap-4">
-        {/* Notificações - só mostra se o navegador suportar */}
-        {isSupported && (
-          <div ref={notificationsRef} className="relative">
-            <button
-              onClick={() => {
-                setIsNotificationsOpen(!isNotificationsOpen);
-                setIsNewsletterOpen(false);
-                setIsMenuOpen(false);
-              }}
-              className="relative text-secondary-600 hover:text-primary-600 dark:text-secondary-400"
-            >
-              <Bell className="h-5 w-5" />
-              {pushEnabled && (
-                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary-600" />
-              )}
-            </button>
-
-            {isNotificationsOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-secondary-200 bg-white py-1 shadow-lg dark:border-secondary-800 dark:bg-secondary-950">
-                <div className="p-4">
-                  <h3 className="mb-4 font-semibold">Notificações Push</h3>
-                  {pushEnabled ? (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
-                      <Check className="h-4 w-4" />
-                      <span>Notificações ativadas</span>
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={requestPermission}
-                      disabled={permission === 'denied'}
-                      className="w-full"
-                    >
-                      Ativar notificações
-                    </Button>
-                  )}
-                  {permission === 'denied' && (
-                    <p className="mt-2 text-xs text-red-600">
-                      Você bloqueou as notificações. Para ativá-las, altere as
-                      permissões do site no seu navegador.
-                    </p>
-                  )}
-                </div>
-                <hr className="border-secondary-200 dark:border-secondary-800" />
-                <div className="p-4">
-                  <p className="text-center text-sm text-secondary-600 dark:text-secondary-400">
-                    Você não tem notificações no momento
-                  </p>
-                </div>
-              </div>
+        {/* Notificações */}
+        <div ref={notificationsRef} className="relative">
+          <button
+            onClick={() => {
+              setIsNotificationsOpen(!isNotificationsOpen);
+              setIsNewsletterOpen(false);
+              setIsMenuOpen(false);
+            }}
+            className="relative text-secondary-600 hover:text-primary-600 dark:text-secondary-400"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[10px] font-medium text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
-          </div>
-        )}
+          </button>
+
+          {isNotificationsOpen && (
+            <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-lg border border-secondary-200 bg-white py-1 shadow-lg dark:border-secondary-800 dark:bg-secondary-950">
+              <div className="flex items-center justify-between border-b border-secondary-200 p-4 dark:border-secondary-800">
+                <h3 className="font-semibold">Notificações</h3>
+                {notifications.length > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-primary-600 hover:underline dark:text-primary-400"
+                  >
+                    Marcar todas como lidas
+                  </button>
+                )}
+              </div>
+
+              <div className="max-h-[400px] overflow-y-auto">
+                {notificationsLoading ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-secondary-600" />
+                  </div>
+                ) : notifications.length > 0 ? (
+                  <div className="divide-y divide-secondary-200 dark:divide-secondary-800">
+                    {notifications.map((notification) => (
+                      <Link
+                        key={notification.id}
+                        href={notification.link}
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          await markAsRead(notification.id);
+                          setIsNotificationsOpen(false);
+                          router.push(notification.link);
+                        }}
+                        className={`block p-4 transition-colors hover:bg-secondary-50 dark:hover:bg-secondary-900 ${
+                          !notification.read
+                            ? 'bg-secondary-50 dark:bg-secondary-900'
+                            : ''
+                        }`}
+                      >
+                        <div className="mb-1 flex items-start justify-between gap-2">
+                          <p
+                            className={`text-sm ${
+                              !notification.read ? 'font-medium' : ''
+                            }`}
+                          >
+                            {notification.newsTitle}
+                          </p>
+                          {!notification.read && (
+                            <span className="h-2 w-2 flex-shrink-0 rounded-full bg-primary-600" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-secondary-600 dark:text-secondary-400">
+                          <span className="rounded-full bg-secondary-100 px-2 py-0.5 dark:bg-secondary-800">
+                            {notification.category}
+                          </span>
+                          <span>
+                            {formatDistanceToNow(notification.createdAt, {
+                              addSuffix: true,
+                              locale: ptBR,
+                            })}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-sm text-secondary-600 dark:text-secondary-400">
+                    Você não tem notificações no momento
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Newsletter */}
         <div ref={newsletterRef} className="relative">

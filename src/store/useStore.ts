@@ -5,7 +5,6 @@ import {
   Category,
   UserPreferences,
   NewsletterPreferences,
-  PushNotificationPreferences,
 } from '@/types';
 
 interface StoreState {
@@ -45,11 +44,6 @@ interface StoreState {
   // Newsletter
   updateNewsletterPreferences: (
     preferences: Partial<NewsletterPreferences>
-  ) => void;
-
-  // Push Notifications
-  updatePushNotifications: (
-    preferences: Partial<PushNotificationPreferences>
   ) => void;
 
   // Read History
@@ -134,19 +128,8 @@ const useStore = create<StoreState>((set) => ({
       user: state.user
         ? {
             ...state.user,
-            newsletter: { ...state.user.newsletter, ...preferences },
-          }
-        : null,
-    })),
-
-  // Push Notifications
-  updatePushNotifications: (preferences) =>
-    set((state) => ({
-      user: state.user
-        ? {
-            ...state.user,
-            pushNotifications: {
-              ...state.user.pushNotifications,
+            newsletter: {
+              ...state.user.newsletter,
               ...preferences,
             },
           }

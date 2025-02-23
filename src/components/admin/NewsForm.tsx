@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
+import { useNews } from '@/hooks/useNews';
 import { Category } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Loader2, Upload } from 'lucide-react';
-import { addDoc, collection, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { toast } from 'react-hot-toast';
 import { slugify } from '@/lib/utils';
@@ -27,30 +28,10 @@ interface NewsFormProps {
   newsId?: string;
 }
 
-interface NewsData {
-  title: string;
-  summary: string;
-  content: string;
-  category: Category;
-  published: boolean;
-  slug: string;
-  imageUrl: string;
-  author: {
-    id: string;
-    name: string;
-    photoURL?: string;
-  };
-  createdAt?: Date;
-  updatedAt: Date;
-  likes?: number;
-  views?: number;
-  comments?: number;
-  [key: string]: any;
-}
-
 export function NewsForm({ newsId }: NewsFormProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { addNews, updateNews } = useNews();
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -172,7 +153,7 @@ export function NewsForm({ newsId }: NewsFormProps) {
         imageUrl = data.secure_url;
       }
 
-      const newsData: NewsData = {
+      const newsData = {
         title: formData.title,
         summary: formData.summary,
         content: formData.content,
@@ -186,20 +167,18 @@ export function NewsForm({ newsId }: NewsFormProps) {
           photoURL: user.photoURL || '/images/avatar-placeholder.png',
         },
         updatedAt: new Date(),
+        createdAt: new Date(),
+        likes: 0,
+        views: 0,
+        comments: 0,
       };
 
       if (newsId) {
         // Atualizar notícia existente
-        await updateDoc(doc(db, 'news', newsId), newsData);
-        toast.success('Notícia atualizada com sucesso!');
+        await updateNews(newsId, newsData);
       } else {
         // Criar nova notícia
-        newsData.createdAt = new Date();
-        newsData.likes = 0;
-        newsData.views = 0;
-        newsData.comments = 0;
-        await addDoc(collection(db, 'news'), newsData);
-        toast.success('Notícia criada com sucesso!');
+        await addNews(newsData);
       }
 
       router.push('/admin');

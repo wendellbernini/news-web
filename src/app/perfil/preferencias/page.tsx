@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { Category } from '@/types';
 import { useUserPreferences } from '@/hooks/useUserPreferences';
 import { useNewsletter } from '@/hooks/useNewsletter';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
 import useStore from '@/store/useStore';
 
 const categories: Category[] = [
@@ -46,9 +45,6 @@ export default function PreferencesPage() {
     updatePreferences,
   } = useNewsletter();
 
-  const { isSupported, isEnabled, permission, requestPermission } =
-    usePushNotifications();
-
   useEffect(() => {
     if (!user) {
       router.push('/login');
@@ -83,7 +79,7 @@ export default function PreferencesPage() {
           <h2 className="mb-4 text-xl font-semibold">
             Categorias de Interesse
           </h2>
-          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {categories.map((category) => (
               <label
                 key={category}
@@ -92,12 +88,15 @@ export default function PreferencesPage() {
                 <input
                   type="checkbox"
                   checked={preferences.categories.includes(category)}
-                  onChange={(e) => {
-                    const newCategories = e.target.checked
-                      ? [...preferences.categories, category]
-                      : preferences.categories.filter((c) => c !== category);
+                  onChange={() => {
+                    const newCategories = preferences.categories.includes(
+                      category
+                    )
+                      ? preferences.categories.filter((c) => c !== category)
+                      : [...preferences.categories, category];
                     updateCategories(newCategories);
                   }}
+                  disabled={prefsLoading}
                   className="h-4 w-4 rounded border-secondary-300 text-primary-600 focus:ring-primary-600"
                 />
                 <span>{category}</span>
@@ -161,7 +160,7 @@ export default function PreferencesPage() {
           </div>
         </section>
 
-        {/* Notificações */}
+        {/* Notificações por Email */}
         <section className="mb-8 rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
           <h2 className="mb-4 text-xl font-semibold">Notificações</h2>
           <div className="space-y-4">
@@ -175,32 +174,12 @@ export default function PreferencesPage() {
               />
               <span>Receber notificações por email</span>
             </label>
-
-            {isSupported && (
-              <div>
-                <Button
-                  onClick={requestPermission}
-                  disabled={permission === 'denied'}
-                  variant={isEnabled ? 'secondary' : 'default'}
-                >
-                  {isEnabled
-                    ? 'Notificações push ativadas'
-                    : 'Ativar notificações push'}
-                </Button>
-                {permission === 'denied' && (
-                  <p className="mt-2 text-sm text-red-600">
-                    Você bloqueou as notificações. Para ativá-las, altere as
-                    permissões do site no seu navegador.
-                  </p>
-                )}
-              </div>
-            )}
           </div>
         </section>
 
         {/* Tema */}
         <section className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-          <h2 className="mb-4 text-xl font-semibold">Aparência</h2>
+          <h2 className="mb-4 text-xl font-semibold">Tema</h2>
           <div className="space-y-4">
             <label className="flex cursor-pointer items-center gap-2">
               <input
