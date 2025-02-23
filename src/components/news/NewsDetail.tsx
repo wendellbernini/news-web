@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useReadHistory } from '@/hooks/useReadHistory';
 import useStore from '@/store/useStore';
 import { useReadingList } from '@/hooks/useReadingList';
+import { useNewsViews } from '@/hooks/useNewsViews';
 
 interface NewsDetailProps {
   slug: string;
@@ -28,6 +29,7 @@ export function NewsDetail({ slug }: NewsDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [historyRegistered, setHistoryRegistered] = useState(false);
+  useNewsViews(news?.id || '');
 
   // Usa a mesma lógica do NewsCard
   const isSaved = news ? user?.savedNews?.includes(news.id) || false : false;
@@ -49,12 +51,23 @@ export function NewsDetail({ slug }: NewsDetailProps) {
         if (!snapshot.empty) {
           const newsDoc = snapshot.docs[0];
           const data = newsDoc.data();
-          const newsData = {
+          const newsData: News = {
             id: newsDoc.id,
-            ...data,
+            title: data.title,
+            slug: data.slug,
+            content: data.content,
+            summary: data.summary,
+            imageUrl: data.imageUrl,
+            category: data.category,
+            author: data.author,
+            published: data.published,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
-          } as News;
+            views: data.views || 0,
+            likes: data.likes || 0,
+            readTime: data.readTime || 5,
+            comments: data.comments || 0,
+          };
 
           setNews(newsData);
         } else {
