@@ -110,6 +110,8 @@ export type Comment = {
   };
   createdAt: Date;
   updatedAt: Date;
+  parentId?: string;
+  replies?: Comment[];
 };
 
 export type Category =

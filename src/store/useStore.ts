@@ -54,6 +54,9 @@ interface StoreState {
 
   // Read History
   addToReadHistory: (newsId: string, progress?: number) => void;
+
+  // Comments
+  updateNewsCommentCount: (newsSlug: string, increment: number) => void;
 }
 
 const useStore = create<StoreState>((set) => ({
@@ -166,6 +169,16 @@ const useStore = create<StoreState>((set) => ({
             ].slice(0, 100), // Mantém apenas os últimos 100 itens
           }
         : null,
+    })),
+
+  // Comments
+  updateNewsCommentCount: (newsSlug: string, increment: number) =>
+    set((state) => ({
+      news: state.news.map((news) =>
+        news.slug === newsSlug
+          ? { ...news, comments: (news.comments || 0) + increment }
+          : news
+      ),
     })),
 }));
 
