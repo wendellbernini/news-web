@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
 import { formatDate, truncateText, ensureDate } from '@/lib/utils';
 import useStore from '@/store/useStore';
+import { useReadingList } from '@/hooks/useReadingList';
 
 interface NewsCardProps {
   news: News;
@@ -21,7 +22,7 @@ export function NewsCard({
   variant = 'default',
 }: NewsCardProps) {
   const user = useStore((state) => state.user);
-  const isSaved = user?.savedNews?.includes(news.id) || false;
+  const { isSaved } = useReadingList();
 
   const handleSave = async () => {
     if (!user) {
@@ -32,6 +33,9 @@ export function NewsCard({
       await onToggleSave(news.id);
     }
   };
+
+  // Usa a função isSaved do hook para maior consistência
+  const isNewsSaved = isSaved(news.id);
 
   if (variant === 'compact') {
     return (
@@ -75,9 +79,11 @@ export function NewsCard({
                 onClick={handleSave}
               >
                 <Bookmark
-                  className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`}
+                  className={`h-4 w-4 ${isNewsSaved ? 'fill-current' : ''}`}
                 />
-                <span className="text-xs">{isSaved ? 'Salvo' : 'Salvar'}</span>
+                <span className="text-xs">
+                  {isNewsSaved ? 'Salvo' : 'Salvar'}
+                </span>
               </Button>
               <Button
                 variant="ghost"
@@ -146,8 +152,10 @@ export function NewsCard({
             className="gap-2"
             onClick={handleSave}
           >
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-            <span>{isSaved ? 'Salvo' : 'Salvar'}</span>
+            <Bookmark
+              className={`h-4 w-4 ${isNewsSaved ? 'fill-current' : ''}`}
+            />
+            <span>{isNewsSaved ? 'Salvo' : 'Salvar'}</span>
           </Button>
           <Button variant="ghost" size="sm" className="gap-2" asChild>
             <Link

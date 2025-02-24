@@ -41,12 +41,12 @@ export const useReadingList = () => {
         return savedNewsSnapshot.docs.map((doc) => doc.data().newsId);
       };
 
-      // Usa o serviço de cache com TTL de 5 minutos
+      // Usa o serviço de cache com TTL de 1 minuto para maior consistência
       const savedNewsIds = await cacheService.get(
         cacheKey,
         fetchFromFirestore,
         {
-          ttl: 300, // 5 minutos
+          ttl: 60, // 1 minuto
         }
       );
 
@@ -64,11 +64,23 @@ export const useReadingList = () => {
     }
   };
 
+  // Executa fetchSavedNews quando o componente monta e quando user.id muda
   useEffect(() => {
     if (user?.id) {
       fetchSavedNews();
     }
   }, [user?.id]);
+
+  // Força uma atualização do estado após cada toggle
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (user?.id) {
+        fetchSavedNews();
+      }
+    }, 500); // Pequeno delay para permitir que a operação anterior termine
+
+    return () => clearTimeout(timeoutId);
+  }, [user?.savedNews]);
 
   // Carrega o histórico de leitura
   useEffect(() => {
