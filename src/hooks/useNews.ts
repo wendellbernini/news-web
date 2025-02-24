@@ -23,6 +23,9 @@ import { toast } from 'react-hot-toast';
 import { cacheService } from '@/lib/cache';
 
 const ITEMS_PER_PAGE = 10;
+const PREFETCH_CATEGORIES = ['tecnologia', 'politica', 'economia']; // Categorias mais acessadas
+const AGGRESSIVE_CACHE_TTL = 1800; // 30 minutos para cache agressivo
+const BATCH_SIZE = 20;
 
 export const useNews = () => {
   const [lastDoc, setLastDoc] =
@@ -43,6 +46,69 @@ export const useNews = () => {
     setNews(updated);
   };
 
+  // Prefetch de dados em background
+  const prefetchRelatedData = useCallback(async (newsItems: News[]) => {
+    const promises = newsItems.map(async (news) => {
+      const detailsCacheKey = `news_details_${news.id}`;
+      return cacheService.get(
+        detailsCacheKey,
+        async () => {
+          // Busca dados relacionados em batch
+          const [comments, views] = await Promise.all([
+            getDoc(doc(db, 'news_comments_count', news.id)),
+            getDoc(doc(db, 'news_views', news.id)),
+          ]);
+
+          return {
+            commentsCount: comments.exists() ? comments.data()?.count || 0 : 0,
+            viewsCount: views.exists() ? views.data()?.count || 0 : 0,
+          };
+        },
+        { ttl: AGGRESSIVE_CACHE_TTL, useMemoryOnly: true }
+      );
+    });
+
+    await Promise.all(promises);
+  }, []);
+
+  // Cache agressivo para categorias principais
+  const prefetchCategoryData = useCallback(async () => {
+    const promises = PREFETCH_CATEGORIES.map(async (category) => {
+      const cacheKey = `news_list_${category}`;
+      return cacheService.get(
+        cacheKey,
+        async () => {
+          const newsQuery = query(
+            collection(db, 'news'),
+            where('published', '==', true),
+            where('category', '==', category),
+            orderBy('createdAt', 'desc'),
+            limit(BATCH_SIZE)
+          );
+
+          const snapshot = await getDocs(newsQuery);
+          return snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.seconds
+              ? new Date(doc.data().createdAt.seconds * 1000)
+              : new Date(),
+            updatedAt: doc.data().updatedAt?.seconds
+              ? new Date(doc.data().updatedAt.seconds * 1000)
+              : new Date(),
+          })) as News[];
+        },
+        { ttl: AGGRESSIVE_CACHE_TTL }
+      );
+    });
+
+    const results = await Promise.all(promises);
+    results.flat().forEach((news) => {
+      const cacheKey = `news_${news.id}`;
+      cacheService.set(cacheKey, news, { ttl: AGGRESSIVE_CACHE_TTL });
+    });
+  }, []);
+
   const fetchNews = useCallback(
     async (category?: Category) => {
       setLoading(true);
@@ -51,12 +117,11 @@ export const useNews = () => {
         const stateKey = `news_state_${category || 'all'}`;
 
         const fetchFromFirestore = async () => {
-          // Query principal com campos essenciais
           const baseQuery = query(
             collection(db, 'news'),
             where('published', '==', true),
             orderBy('createdAt', 'desc'),
-            limit(ITEMS_PER_PAGE)
+            limit(BATCH_SIZE)
           );
 
           const newsQuery = category
@@ -64,39 +129,22 @@ export const useNews = () => {
             : baseQuery;
 
           const snapshot = await getDocs(newsQuery);
+          const fetchedNews = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.seconds
+              ? new Date(doc.data().createdAt.seconds * 1000)
+              : new Date(),
+            updatedAt: doc.data().updatedAt?.seconds
+              ? new Date(doc.data().updatedAt.seconds * 1000)
+              : new Date(),
+          })) as News[];
 
-          // Processa os documentos em batch para melhor performance
-          const fetchedNews = await Promise.all(
-            snapshot.docs.map(async (doc) => {
-              const data = doc.data();
-              const newsItem = {
-                id: doc.id,
-                ...data,
-                createdAt: data.createdAt?.seconds
-                  ? new Date(data.createdAt.seconds * 1000)
-                  : new Date(),
-                updatedAt: data.updatedAt?.seconds
-                  ? new Date(data.updatedAt.seconds * 1000)
-                  : new Date(),
-              } as News;
-
-              // Usa cache local para dados complementares
-              const detailsCacheKey = `news_details_${doc.id}`;
-              const cachedDetails = await cacheService.get(
-                detailsCacheKey,
-                async () => ({}),
-                { useMemoryOnly: true }
-              );
-
-              return { ...newsItem, ...cachedDetails };
-            })
-          );
-
-          const hasMore = snapshot.docs.length === ITEMS_PER_PAGE;
+          const hasMore = snapshot.docs.length === BATCH_SIZE;
           setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
           setHasMore(hasMore);
 
-          // Salva o estado atual
+          // Cache agressivo
           await cacheService.set(
             stateKey,
             {
@@ -107,21 +155,33 @@ export const useNews = () => {
             { useMemoryOnly: true }
           );
 
+          // Prefetch em background
+          prefetchRelatedData(fetchedNews);
+          if (!category) {
+            prefetchCategoryData();
+          }
+
           return fetchedNews;
         };
 
-        // Tenta recuperar estado salvo primeiro
+        // Tenta recuperar do cache agressivo primeiro
         const savedState = await cacheService.get<{
           news: News[];
           hasMore: boolean;
           timestamp: number;
         } | null>(stateKey, async () => null, { useMemoryOnly: true });
 
-        // Se tiver estado salvo e for recente (menos de 1 minuto), usa ele
-        if (savedState && Date.now() - savedState.timestamp < 60000) {
+        // Se tiver estado salvo e for recente (menos de 5 minutos), usa ele
+        if (savedState && Date.now() - savedState.timestamp < 300000) {
           setNews(savedState.news);
           setHasMore(savedState.hasMore);
           setLoading(false);
+
+          // Atualiza dados em background
+          prefetchRelatedData(savedState.news);
+          if (!category) {
+            prefetchCategoryData();
+          }
 
           // Atualiza em background
           fetchFromFirestore().then((freshNews) => {
@@ -137,7 +197,7 @@ export const useNews = () => {
           cacheKey,
           fetchFromFirestore,
           {
-            ttl: 900, // 15 minutos
+            ttl: AGGRESSIVE_CACHE_TTL,
           }
         );
 
@@ -149,7 +209,7 @@ export const useNews = () => {
         setLoading(false);
       }
     },
-    [setNews]
+    [setNews, updateNewsList, prefetchRelatedData, prefetchCategoryData]
   );
 
   const fetchMoreNews = useCallback(
