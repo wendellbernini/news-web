@@ -64,6 +64,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const isDark = localStorage.getItem('darkMode') === 'true' ||
+                             (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('darkMode'));
+                if (isDark) document.documentElement.classList.add('dark');
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${roboto.variable} font-sans`}
         suppressHydrationWarning

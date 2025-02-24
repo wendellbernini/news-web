@@ -54,26 +54,26 @@ export const useUserPreferences = () => {
       return false;
     }
 
-    setLoading(true);
     const newDarkMode = !user.preferences.darkMode;
 
+    // Atualiza a UI imediatamente
+    updateUserPreferences({ darkMode: newDarkMode });
+    toggleGlobalDarkMode();
+
+    // Depois atualiza o banco de dados
     try {
       const userRef = doc(db, 'users', user.id);
       await updateDoc(userRef, {
         'preferences.darkMode': newDarkMode,
       });
-
-      updateUserPreferences({ darkMode: newDarkMode });
-      toggleGlobalDarkMode();
-
-      toast.success('Tema atualizado com sucesso!');
       return true;
     } catch (error) {
       console.error('Erro ao atualizar tema:', error);
+      // Reverte as alterações em caso de erro
+      updateUserPreferences({ darkMode: !newDarkMode });
+      toggleGlobalDarkMode();
       toast.error('Erro ao atualizar tema');
       return false;
-    } finally {
-      setLoading(false);
     }
   };
 

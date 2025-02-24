@@ -97,12 +97,21 @@ class CookieService {
    */
   getUserPreferences(): UserPreferences {
     try {
-      const stored = document.cookie
+      // Para o tema, primeiro tenta o localStorage
+      if (typeof window !== 'undefined') {
+        const darkMode = localStorage.getItem('darkMode');
+        if (darkMode !== null) {
+          return { darkMode: darkMode === 'true' };
+        }
+      }
+
+      // Fallback para cookies
+      const prefs = document.cookie
         .split('; ')
         .find((row) => row.startsWith(this.USER_PREFS_KEY));
 
-      if (stored) {
-        const [, value] = stored.split('=');
+      if (prefs) {
+        const [, value] = prefs.split('=');
         return JSON.parse(decodeURIComponent(value));
       }
     } catch (error) {
@@ -123,14 +132,20 @@ class CookieService {
     }
 
     try {
+      // Salva o tema no localStorage para acesso rápido
+      if (key === 'darkMode') {
+        localStorage.setItem('darkMode', value);
+      }
+
+      // Continua salvando nos cookies para persistência
       const prefs = this.getUserPreferences();
-      prefs[key] = value;
+      const newPrefs = { ...prefs, [key]: value };
 
       const expires = new Date();
       expires.setMonth(expires.getMonth() + 6);
 
       document.cookie = `${this.USER_PREFS_KEY}=${encodeURIComponent(
-        JSON.stringify(prefs)
+        JSON.stringify(newPrefs)
       )}; expires=${expires.toUTCString()}; path=/; SameSite=Strict`;
 
       return true;

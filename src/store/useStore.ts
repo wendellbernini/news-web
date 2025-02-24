@@ -56,6 +56,8 @@ interface StoreState {
 
 // Função auxiliar para obter tema inicial
 const getInitialTheme = (): boolean => {
+  if (typeof window === 'undefined') return false;
+
   // Se tiver cookies funcionais, usa a preferência salva
   const { preferences, active } = cookieService.checkStatus();
   if (active && preferences.functional) {
@@ -71,14 +73,23 @@ const getInitialTheme = (): boolean => {
 const useStore = create<StoreState>((set) => ({
   // Auth
   user: null,
-  setUser: (user) =>
+  setUser: (user) => {
+    // Atualiza o tema imediatamente quando o usuário é carregado
+    const darkMode = user?.preferences?.darkMode ?? getInitialTheme();
     set({
       user: user ? { ...user, savedNews: user.savedNews || [] } : null,
-      isDarkMode: user?.preferences?.darkMode || getInitialTheme(),
-    }),
+      isDarkMode: darkMode,
+    });
+
+    // Se cookies funcionais estiverem ativos, salva a preferência
+    const { preferences } = cookieService.checkStatus();
+    if (preferences.functional) {
+      cookieService.saveUserPreference('darkMode', darkMode);
+    }
+  },
 
   // Theme
-  isDarkMode: typeof window !== 'undefined' ? getInitialTheme() : false,
+  isDarkMode: false, // Começa como false e atualiza após hidratação
   toggleDarkMode: () =>
     set((state) => {
       const newDarkMode = !state.isDarkMode;
