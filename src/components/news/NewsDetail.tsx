@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, calculateReadTime } from '@/lib/utils';
 import { Loader2, Share2, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ReactMarkdown from 'react-markdown';
@@ -65,7 +65,7 @@ export function NewsDetail({ slug }: NewsDetailProps) {
             updatedAt: data.updatedAt?.toDate() || new Date(),
             views: data.views || 0,
             likes: data.likes || 0,
-            readTime: data.readTime || 5,
+            readTime: calculateReadTime(data.content),
             comments: data.comments || 0,
           };
 
