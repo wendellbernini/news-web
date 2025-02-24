@@ -69,7 +69,7 @@ export function NewsTicker() {
   const currentNews = news[currentNewsIndex];
 
   return (
-    <div className="bg-black text-white">
+    <div className="bg-black text-white dark:bg-[rgb(33,33,33)]">
       <div className="container flex h-10 items-center justify-between text-sm">
         <div className="flex flex-1 items-center gap-6">
           <div className="flex items-center gap-2">
@@ -77,8 +77,8 @@ export function NewsTicker() {
             <span className="font-medium">{weather?.temp ?? '--'}°C</span>
           </div>
           <div className="relative flex-1 overflow-hidden">
-            <div className="absolute inset-y-0 left-0 z-[5] w-8 bg-gradient-to-r from-black to-transparent" />
-            <div className="absolute inset-y-0 right-0 z-[5] w-8 bg-gradient-to-l from-black to-transparent" />
+            <div className="absolute inset-y-0 left-0 z-[5] w-8 bg-gradient-to-r from-black to-transparent dark:from-[rgb(33,33,33)]" />
+            <div className="absolute inset-y-0 right-0 z-[5] w-8 bg-gradient-to-l from-black to-transparent dark:from-[rgb(33,33,33)]" />
             <Link
               href={`/noticias/${currentNews.slug}`}
               className="animate-slide-left inline-block whitespace-nowrap hover:underline"

@@ -32,7 +32,10 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-secondary-200 bg-white/80 backdrop-blur-sm dark:border-secondary-800 dark:bg-secondary-950/80">
       <div className="container flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="text-2xl font-bold text-primary-600">
+        <Link
+          href="/"
+          className="text-2xl font-bold text-primary-600 dark:text-white"
+        >
           {SITE_NAME}
         </Link>
 
