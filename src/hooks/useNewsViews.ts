@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { doc, increment, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { cacheService } from '@/lib/cache';
 
 const VIEWS_STORAGE_KEY = 'news_views';
+const VIEW_DEBOUNCE_TIME = 30000; // 30 segundos
 
 export const useNewsViews = (newsId: string) => {
   const [hasViewed, setHasViewed] = useState(false);
@@ -23,6 +25,23 @@ export const useNewsViews = (newsId: string) => {
       }
 
       try {
+        // Usa o cache para controlar o debounce de visualizações
+        const cacheKey = `news_view_${newsId}`;
+        const lastViewTimestamp = await cacheService.get(
+          cacheKey,
+          async () => null,
+          { useMemoryOnly: true }
+        );
+
+        const now = Date.now();
+        if (lastViewTimestamp && now - lastViewTimestamp < VIEW_DEBOUNCE_TIME) {
+          // Se a última visualização foi muito recente, não incrementa
+          return;
+        }
+
+        // Atualiza o timestamp da última visualização
+        cacheService.set(cacheKey, now, true);
+
         // Atualiza o contador de views no Firestore
         const newsRef = doc(db, 'news', newsId);
         await updateDoc(newsRef, {

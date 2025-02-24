@@ -4,7 +4,7 @@ import { Bookmark, MessageCircle, Share2 } from 'lucide-react';
 import { News } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
-import { formatDate, truncateText } from '@/lib/utils';
+import { formatDate, truncateText, ensureDate } from '@/lib/utils';
 import useStore from '@/store/useStore';
 
 interface NewsCardProps {
@@ -60,8 +60,8 @@ export function NewsCard({
                 </CardTitle>
               </Link>
               <CardDescription className="mt-1 flex items-center gap-2 text-xs">
-                <time dateTime={news.createdAt.toISOString()}>
-                  {formatDate(news.createdAt)}
+                <time dateTime={ensureDate(news.createdAt).toISOString()}>
+                  {formatDate(ensureDate(news.createdAt))}
                 </time>
                 <span>•</span>
                 <span>{news.category}</span>
@@ -130,8 +130,8 @@ export function NewsCard({
           />
           <span>{news.author.name}</span>
           <span>•</span>
-          <time dateTime={news.createdAt.toISOString()}>
-            {formatDate(news.createdAt)}
+          <time dateTime={ensureDate(news.createdAt).toISOString()}>
+            {formatDate(ensureDate(news.createdAt))}
           </time>
         </div>
 

@@ -4,13 +4,13 @@ import {
   getDoc,
   updateDoc,
   arrayUnion,
-  serverTimestamp,
   setDoc,
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from './useAuth';
 import useStore from '@/store/useStore';
+import { cacheService } from '@/lib/cache';
 
 interface ReadHistoryItem {
   newsId: string;
@@ -49,25 +49,22 @@ export function useReadHistory() {
           newsTitle,
         });
 
-        const userRef = doc(db, 'users', user.id);
-        const userDoc = await getDoc(userRef);
+        const cacheKey = `read_history_${user.id}`;
 
-        // Se o documento não existir, cria com os campos necessários
-        if (!userDoc.exists()) {
-          console.log('useReadHistory: Criando documento do usuário');
-          await setDoc(userRef, {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            readHistory: [],
-            createdAt: serverTimestamp(),
-          });
-        }
+        // Verifica se já está no histórico usando cache
+        const cachedHistory = await cacheService.get<ReadHistoryItem[]>(
+          cacheKey,
+          async () => {
+            const userRef = doc(db, 'users', user.id);
+            const userDoc = await getDoc(userRef);
+            return userDoc.exists() ? userDoc.data().readHistory || [] : [];
+          },
+          { ttl: 300 } // 5 minutos
+        );
 
-        // Verifica se a notícia já está no histórico
-        const userData = userDoc.data();
-        const readHistory = (userData?.readHistory || []) as ReadHistoryItem[];
-        const alreadyRead = readHistory.some((item) => item.newsId === newsId);
+        const alreadyRead = cachedHistory.some(
+          (item) => item.newsId === newsId
+        );
 
         if (alreadyRead) {
           console.log('useReadHistory: Notícia já está no histórico');
@@ -92,10 +89,15 @@ export function useReadHistory() {
         // Adiciona ao array readHistory do usuário
         try {
           console.log('DEBUG - Iniciando updateDoc...');
+          const userRef = doc(db, 'users', user.id);
           await updateDoc(userRef, {
             readHistory: arrayUnion(historyItem),
           });
           console.log('DEBUG - updateDoc concluído com sucesso');
+
+          // Atualiza o cache com o novo item
+          const updatedHistory = [historyItem, ...cachedHistory];
+          cacheService.set(cacheKey, updatedHistory);
         } catch (error) {
           console.error('DEBUG - Erro no updateDoc:', error);
 
@@ -105,12 +107,16 @@ export function useReadHistory() {
             error.message.includes('No document to update')
           ) {
             console.log('DEBUG - Criando campo readHistory...');
+            const userRef = doc(db, 'users', user.id);
             await setDoc(
               userRef,
               { readHistory: [historyItem] },
               { merge: true }
             );
             console.log('DEBUG - Campo readHistory criado com sucesso');
+
+            // Atualiza o cache
+            cacheService.set(cacheKey, [historyItem]);
           } else {
             throw error;
           }

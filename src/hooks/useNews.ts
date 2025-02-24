@@ -20,6 +20,7 @@ import { News, Category } from '@/types';
 import useStore from '@/store/useStore';
 import { useNotifications } from '@/hooks/useNotifications';
 import { toast } from 'react-hot-toast';
+import { cacheService } from '@/lib/cache';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -41,31 +42,47 @@ export const useNews = () => {
     async (category?: Category) => {
       setLoading(true);
       try {
-        const baseQuery = query(
-          collection(db, 'news'),
-          where('published', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(ITEMS_PER_PAGE)
+        const cacheKey = `news_list_${category || 'all'}`;
+
+        const fetchFromFirestore = async () => {
+          const baseQuery = query(
+            collection(db, 'news'),
+            where('published', '==', true),
+            orderBy('createdAt', 'desc'),
+            limit(ITEMS_PER_PAGE)
+          );
+
+          const newsQuery = category
+            ? query(baseQuery, where('category', '==', category))
+            : baseQuery;
+
+          const snapshot = await getDocs(newsQuery);
+          const fetchedNews = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.seconds
+              ? new Date(doc.data().createdAt.seconds * 1000)
+              : new Date(),
+            updatedAt: doc.data().updatedAt?.seconds
+              ? new Date(doc.data().updatedAt.seconds * 1000)
+              : new Date(),
+          })) as News[];
+
+          setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+          setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
+
+          return fetchedNews;
+        };
+
+        // Usa o serviço de cache com TTL de 5 minutos para lista de notícias
+        const fetchedNews = await cacheService.get(
+          cacheKey,
+          fetchFromFirestore,
+          {
+            ttl: 300, // 5 minutos
+          }
         );
 
-        const newsQuery = category
-          ? query(baseQuery, where('category', '==', category))
-          : baseQuery;
-
-        const snapshot = await getDocs(newsQuery);
-        const fetchedNews = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.seconds
-            ? new Date(doc.data().createdAt.seconds * 1000)
-            : new Date(),
-          updatedAt: doc.data().updatedAt?.seconds
-            ? new Date(doc.data().updatedAt.seconds * 1000)
-            : new Date(),
-        })) as News[];
-
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
         setNews(fetchedNews);
       } catch (error) {
         console.error('Erro ao buscar notícias:', error);
@@ -79,7 +96,7 @@ export const useNews = () => {
 
   const fetchMoreNews = useCallback(
     async (category?: Category) => {
-      if (!lastDoc) return;
+      if (!lastDoc || !hasMore) return;
 
       setLoading(true);
       try {
@@ -117,13 +134,17 @@ export const useNews = () => {
         setLoading(false);
       }
     },
-    [lastDoc, news, setNews]
+    [lastDoc, hasMore, setNews, news]
   );
 
-  const getNewsById = async (id: string) => {
+  const getNewsById = useCallback(async (id: string): Promise<News | null> => {
     try {
-      const newsDoc = await getDoc(doc(db, 'news', id));
-      if (newsDoc.exists()) {
+      const cacheKey = `news_${id}`;
+
+      const fetchFromFirestore = async () => {
+        const newsDoc = await getDoc(doc(db, 'news', id));
+        if (!newsDoc.exists()) return null;
+
         const data = newsDoc.data();
         return {
           id: newsDoc.id,
@@ -135,97 +156,23 @@ export const useNews = () => {
             ? new Date(data.updatedAt.seconds * 1000)
             : new Date(),
         } as News;
-      }
-      return null;
+      };
+
+      // Usa o serviço de cache com TTL de 10 minutos para notícias individuais
+      return await cacheService.get(cacheKey, fetchFromFirestore, {
+        ttl: 600, // 10 minutos
+      });
     } catch (error) {
       console.error('Erro ao buscar notícia:', error);
       toast.error('Erro ao carregar notícia');
       return null;
     }
-  };
-
-  const addNews = async (newsData: Omit<News, 'id'>) => {
-    try {
-      console.log('[Debug] Iniciando criação de notícia:', {
-        title: newsData.title,
-        category: newsData.category,
-        published: newsData.published,
-      });
-
-      const docRef = await addDoc(collection(db, 'news'), newsData);
-      const newNews = { id: docRef.id, ...newsData };
-      addNewsToStore(newNews);
-
-      // Se a notícia for publicada, cria notificações para usuários interessados
-      if (newsData.published) {
-        console.log('[Debug] Notícia publicada, criando notificações', {
-          newsId: docRef.id,
-          category: newsData.category,
-        });
-
-        await createNotificationsForNews(
-          docRef.id,
-          newsData.title,
-          newsData.category,
-          `/noticias/${newsData.slug}`
-        );
-      }
-
-      toast.success('Notícia criada com sucesso!');
-      return newNews;
-    } catch (error) {
-      console.error('[Debug] Erro ao criar notícia:', error);
-      toast.error('Erro ao criar notícia');
-      return null;
-    }
-  };
-
-  const updateNews = async (id: string, newsData: Partial<News>) => {
-    try {
-      const docRef = doc(db, 'news', id);
-      const currentDoc = await getDoc(docRef);
-      const currentData = currentDoc.data() as News;
-
-      await updateDoc(docRef, newsData);
-      updateNewsInStore({ id, ...newsData } as News);
-
-      // Se a notícia foi publicada agora, cria notificações
-      if (
-        newsData.published &&
-        !currentData.published &&
-        currentData.category
-      ) {
-        await createNotificationsForNews(
-          id,
-          newsData.title || currentData.title,
-          currentData.category,
-          `/noticias/${currentData.slug}`
-        );
-      }
-
-      toast.success('Notícia atualizada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao atualizar notícia:', error);
-      toast.error('Erro ao atualizar notícia');
-    }
-  };
-
-  const deleteNews = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, 'news', id));
-      deleteNewsFromStore(id);
-      toast.success('Notícia excluída com sucesso!');
-    } catch (error) {
-      console.error('Erro ao excluir notícia:', error);
-      toast.error('Erro ao excluir notícia');
-    }
-  };
+  }, []);
 
   const searchNews = useCallback(
     async (searchQuery: string) => {
       console.log('[Debug] searchNews chamado com query:', searchQuery);
 
-      // Se a query estiver vazia, apenas limpa os resultados
       if (!searchQuery.trim()) {
         console.log('[Debug] Query vazia, limpando resultados');
         setNews([]);
@@ -234,62 +181,163 @@ export const useNews = () => {
 
       setLoading(true);
       try {
-        console.log('[Debug] Iniciando busca no Firestore');
-        // Nota: Esta é uma implementação básica de busca.
-        // Para uma busca mais robusta, considere usar Algolia ou ElasticSearch
-        const newsQuery = query(
-          collection(db, 'news'),
-          where('published', '==', true),
-          orderBy('title'),
-          limit(20)
-        );
+        const cacheKey = `search_${searchQuery.toLowerCase().trim()}`;
 
-        const snapshot = await getDocs(newsQuery);
-        const newsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            createdAt: data.createdAt?.seconds
-              ? new Date(data.createdAt.seconds * 1000)
-              : new Date(),
-            updatedAt: data.updatedAt?.seconds
-              ? new Date(data.updatedAt.seconds * 1000)
-              : new Date(),
-          };
-        }) as News[];
+        const fetchFromFirestore = async () => {
+          const newsQuery = query(
+            collection(db, 'news'),
+            where('published', '==', true),
+            orderBy('title'),
+            limit(20)
+          );
 
-        // Filtra as notícias localmente
-        const searchQueryLower = searchQuery.toLowerCase();
-        const filteredNews = newsData.filter(
-          (news) =>
-            news.title.toLowerCase().includes(searchQueryLower) ||
-            news.content.toLowerCase().includes(searchQueryLower)
-        );
+          const snapshot = await getDocs(newsQuery);
+          const newsData = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              createdAt: data.createdAt?.seconds
+                ? new Date(data.createdAt.seconds * 1000)
+                : new Date(),
+              updatedAt: data.updatedAt?.seconds
+                ? new Date(data.updatedAt.seconds * 1000)
+                : new Date(),
+            };
+          }) as News[];
 
-        // Só atualiza o estado se houver mudanças
-        setNews(filteredNews);
+          const searchQueryLower = searchQuery.toLowerCase();
+          return newsData.filter(
+            (news) =>
+              news.title.toLowerCase().includes(searchQueryLower) ||
+              news.content.toLowerCase().includes(searchQueryLower)
+          );
+        };
+
+        // Usa o serviço de cache com TTL de 5 minutos para resultados de busca
+        const results = await cacheService.get(cacheKey, fetchFromFirestore, {
+          ttl: 300, // 5 minutos
+          useMemoryOnly: true, // Usa apenas cache em memória para buscas
+        });
+
+        setNews(results);
       } catch (error) {
         console.error('Erro ao buscar notícias:', error);
         toast.error('Erro ao buscar notícias');
-        setNews([]); // Limpa os resultados em caso de erro
+        setNews([]);
       } finally {
         setLoading(false);
       }
     },
-    [setNews, setLoading]
+    [setNews]
+  );
+
+  const createNews = useCallback(
+    async (newsData: Omit<News, 'id' | 'createdAt' | 'updatedAt'>) => {
+      try {
+        const docRef = await addDoc(collection(db, 'news'), {
+          ...newsData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        const newNews: News = {
+          id: docRef.id,
+          ...newsData,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        addNewsToStore(newNews);
+        await createNotificationsForNews(
+          newNews.id,
+          newNews.title,
+          newNews.category,
+          `/noticias/${newNews.slug}`
+        );
+
+        // Invalida caches relacionados
+        cacheService.remove('news_list_all');
+        if (newsData.category) {
+          cacheService.remove(`news_list_${newsData.category}`);
+        }
+
+        return newNews;
+      } catch (error) {
+        console.error('Erro ao criar notícia:', error);
+        toast.error('Erro ao criar notícia');
+        throw error;
+      }
+    },
+    [addNewsToStore, createNotificationsForNews]
+  );
+
+  const updateNews = useCallback(
+    async (id: string, newsData: Partial<News>) => {
+      try {
+        const newsRef = doc(db, 'news', id);
+        await updateDoc(newsRef, {
+          ...newsData,
+          updatedAt: new Date(),
+        });
+
+        const updatedNews = {
+          id,
+          ...newsData,
+          updatedAt: new Date(),
+        } as News;
+
+        updateNewsInStore(updatedNews);
+
+        // Invalida caches relacionados
+        cacheService.remove(`news_${id}`);
+        cacheService.remove('news_list_all');
+        if (newsData.category) {
+          cacheService.remove(`news_list_${newsData.category}`);
+        }
+
+        return updatedNews;
+      } catch (error) {
+        console.error('Erro ao atualizar notícia:', error);
+        toast.error('Erro ao atualizar notícia');
+        throw error;
+      }
+    },
+    [updateNewsInStore]
+  );
+
+  const deleteNews = useCallback(
+    async (id: string) => {
+      try {
+        await deleteDoc(doc(db, 'news', id));
+        deleteNewsFromStore(id);
+
+        // Invalida caches relacionados
+        cacheService.remove(`news_${id}`);
+        cacheService.remove('news_list_all');
+        // Não podemos invalidar por categoria pois não temos acesso à categoria da notícia aqui
+        // Uma alternativa seria buscar a notícia antes de deletar para saber a categoria
+
+        return id;
+      } catch (error) {
+        console.error('Erro ao deletar notícia:', error);
+        toast.error('Erro ao deletar notícia');
+        throw error;
+      }
+    },
+    [deleteNewsFromStore]
   );
 
   return {
     news,
     loading,
+    hasMore,
     fetchNews,
     fetchMoreNews,
     getNewsById,
-    addNews,
+    searchNews,
+    addNews: createNews,
     updateNews,
     deleteNews,
-    searchNews,
-    hasMore,
   };
 };

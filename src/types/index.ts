@@ -174,3 +174,17 @@ export type PushNotificationPreferences = {
   /** Se deseja receber notificações de novos artigos */
   newArticles: boolean;
 };
+
+/**
+ * Configurações de cache do sistema
+ */
+export interface CacheConfig {
+  /** Se o cache está ativo */
+  enabled: boolean;
+  /** Duração do cache em segundos */
+  duration: number;
+  /** Se o CDN está ativo */
+  cdnEnabled: boolean;
+  /** URL base do CDN */
+  cdnUrl: string;
+}

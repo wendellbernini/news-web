@@ -13,6 +13,7 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { cacheService } from '@/lib/cache';
 
 export const useReadingList = () => {
   const { user, addToReadHistory, setUser } = useStore();
@@ -27,15 +28,26 @@ export const useReadingList = () => {
     }
 
     try {
-      const savedNewsQuery = query(
-        collection(db, 'savedNews'),
-        where('userId', '==', user.id),
-        where('status', '==', 'active')
-      );
+      const cacheKey = `saved_news_${user.id}`;
 
-      const savedNewsSnapshot = await getDocs(savedNewsQuery);
-      const savedNewsIds = savedNewsSnapshot.docs.map(
-        (doc) => doc.data().newsId
+      const fetchFromFirestore = async () => {
+        const savedNewsQuery = query(
+          collection(db, 'savedNews'),
+          where('userId', '==', user.id),
+          where('status', '==', 'active')
+        );
+
+        const savedNewsSnapshot = await getDocs(savedNewsQuery);
+        return savedNewsSnapshot.docs.map((doc) => doc.data().newsId);
+      };
+
+      // Usa o serviço de cache com TTL de 5 minutos
+      const savedNewsIds = await cacheService.get(
+        cacheKey,
+        fetchFromFirestore,
+        {
+          ttl: 300, // 5 minutos
+        }
       );
 
       // Atualiza o estado apenas se houver mudança
@@ -103,6 +115,7 @@ export const useReadingList = () => {
     }
 
     const isSaved = user.savedNews.includes(newsId);
+    const cacheKey = `saved_news_${user.id}`;
 
     try {
       if (isSaved) {
@@ -117,10 +130,14 @@ export const useReadingList = () => {
         await Promise.all(snapshot.docs.map((doc) => deleteDoc(doc.ref)));
 
         // Atualiza estado
+        const newSavedNews = user.savedNews.filter((id) => id !== newsId);
         setUser({
           ...user,
-          savedNews: user.savedNews.filter((id) => id !== newsId),
+          savedNews: newSavedNews,
         });
+
+        // Atualiza cache
+        cacheService.set(cacheKey, newSavedNews);
       } else {
         // Salva no Firestore
         await addDoc(collection(db, 'savedNews'), {
@@ -131,10 +148,14 @@ export const useReadingList = () => {
         });
 
         // Atualiza estado
+        const newSavedNews = [...user.savedNews, newsId];
         setUser({
           ...user,
-          savedNews: [...user.savedNews, newsId],
+          savedNews: newSavedNews,
         });
+
+        // Atualiza cache
+        cacheService.set(cacheKey, newSavedNews);
       }
 
       toast.success(isSaved ? 'Notícia removida' : 'Notícia salva');
