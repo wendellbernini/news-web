@@ -43,11 +43,13 @@ export function StockTicker() {
   }, []); // Agora não precisa de dependências externas
 
   if (quotes.length === 0) {
-    return <div className="h-8 border-y border-gray-200 bg-white" />;
+    return (
+      <div className="h-8 border-y border-secondary-200 bg-white dark:border-secondary-800 dark:bg-secondary-900" />
+    );
   }
 
   return (
-    <div className="border-y border-gray-200 bg-white">
+    <div className="border-y border-secondary-200 bg-white dark:border-secondary-800 dark:bg-secondary-900">
       <div className="container h-8">
         <div className="flex items-center gap-8 py-1.5">
           {quotes.map((quote, index) => (
@@ -55,13 +57,17 @@ export function StockTicker() {
               key={`${quote.symbol}-${index}`}
               className="flex items-center gap-2 text-sm transition-opacity duration-200"
             >
-              <span className="font-medium text-gray-900">
+              <span className="font-medium text-secondary-900 dark:text-secondary-100">
                 {quote.symbol === 'USD' ? 'USD/BRL' : quote.symbol}
               </span>
-              <span className="text-gray-900">{quote.price.toFixed(2)}</span>
+              <span className="text-secondary-900 dark:text-secondary-100">
+                {quote.price.toFixed(2)}
+              </span>
               <span
                 className={`flex items-center gap-1 ${
-                  quote.change > 0 ? 'text-green-600' : 'text-red-600'
+                  quote.change > 0
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-600 dark:text-red-400'
                 }`}
               >
                 {quote.change > 0 ? (

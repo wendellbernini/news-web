@@ -8,7 +8,11 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 export const useUserPreferences = () => {
-  const { user, updateUserPreferences } = useStore();
+  const {
+    user,
+    updateUserPreferences,
+    toggleDarkMode: toggleGlobalDarkMode,
+  } = useStore();
   const [loading, setLoading] = useState(false);
 
   const updateCategories = async (categories: Category[]) => {
@@ -51,14 +55,17 @@ export const useUserPreferences = () => {
     }
 
     setLoading(true);
+    const newDarkMode = !user.preferences.darkMode;
 
     try {
-      // Aqui você implementaria a lógica de atualização no backend
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      updateUserPreferences({
-        darkMode: !user.preferences.darkMode,
+      const userRef = doc(db, 'users', user.id);
+      await updateDoc(userRef, {
+        'preferences.darkMode': newDarkMode,
       });
+
+      updateUserPreferences({ darkMode: newDarkMode });
+      toggleGlobalDarkMode();
+
       toast.success('Tema atualizado com sucesso!');
       return true;
     } catch (error) {

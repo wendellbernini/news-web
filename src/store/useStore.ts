@@ -57,7 +57,10 @@ const useStore = create<StoreState>((set) => ({
   // Auth
   user: null,
   setUser: (user) =>
-    set({ user: user ? { ...user, savedNews: user.savedNews || [] } : null }),
+    set({
+      user: user ? { ...user, savedNews: user.savedNews || [] } : null,
+      isDarkMode: user?.preferences?.darkMode || false,
+    }),
 
   // Theme
   isDarkMode: false,
