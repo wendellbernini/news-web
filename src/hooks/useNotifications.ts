@@ -13,10 +13,12 @@ import {
   getDocs,
   Timestamp,
   writeBatch,
+  limit,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Notification } from '@/types';
 import useStore from '@/store/useStore';
+import { cacheService } from '@/lib/cache';
 
 /**
  * Hook para gerenciar notificações do usuário
@@ -30,6 +32,38 @@ export const useNotifications = () => {
   const { user } = useStore();
 
   /**
+   * Converte um documento do Firestore em uma notificação
+   * @param doc Documento do Firestore
+   * @returns Objeto de notificação formatado
+   */
+  const mapNotificationDoc = (doc: any): Notification => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      userId: data.userId,
+      newsId: data.newsId,
+      newsTitle: data.newsTitle,
+      category: data.category,
+      createdAt: new Date((data.createdAt as Timestamp).seconds * 1000),
+      read: false,
+      link: data.link,
+    };
+  };
+
+  /**
+   * Cria uma query para buscar notificações não lidas do usuário
+   */
+  const createNotificationsQuery = (userId: string) => {
+    return query(
+      collection(db, 'user_notifications'),
+      where('userId', '==', userId),
+      where('read', '==', false),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+  };
+
+  /**
    * Busca e monitora notificações do usuário em tempo real
    */
   useEffect(() => {
@@ -38,50 +72,37 @@ export const useNotifications = () => {
       return;
     }
 
-    const notificationsQuery = query(
-      collection(db, 'user_notifications'),
-      where('userId', '==', user.id),
-      where('read', '==', false), // Apenas notificações não lidas
-      orderBy('createdAt', 'desc')
-    );
+    const notificationsQuery = createNotificationsQuery(user.id);
+    const cacheKey = `notifications_${user.id}`;
 
     const unsubscribe = onSnapshot(
       notificationsQuery,
-      (snapshot) => {
-        console.log('[Debug] Atualizando notificações:', {
-          total: snapshot.docs.length,
-          userId: user.id,
-        });
-
-        const notificationsData = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            userId: data.userId,
-            newsId: data.newsId,
-            newsTitle: data.newsTitle,
-            category: data.category,
-            createdAt: new Date((data.createdAt as Timestamp).seconds * 1000),
-            read: false, // Já sabemos que são não lidas pela query
-            link: data.link,
-          };
-        }) as Notification[];
-
+      async (snapshot) => {
+        const notificationsData = snapshot.docs.map(mapNotificationDoc);
+        await cacheService.set(cacheKey, notificationsData);
         setNotifications(notificationsData);
         setUnreadCount(notificationsData.length);
         setLoading(false);
-
-        console.log('[Debug] Notificações atualizadas:', {
-          total: notificationsData.length,
-          notifications: notificationsData,
-        });
       },
       (error) => {
-        console.error('[Debug] Erro ao buscar notificações:', error);
+        console.error('[Notifications] Erro ao buscar notificações:', error);
         toast.error('Erro ao carregar notificações');
         setLoading(false);
       }
     );
+
+    const fetchFromFirestore = async () => {
+      const snapshot = await getDocs(notificationsQuery);
+      return snapshot.docs.map(mapNotificationDoc);
+    };
+
+    cacheService.get(cacheKey, fetchFromFirestore).then((cachedData) => {
+      if (cachedData) {
+        setNotifications(cachedData);
+        setUnreadCount(cachedData.length);
+        setLoading(false);
+      }
+    });
 
     return () => unsubscribe();
   }, [user?.id]);
@@ -98,8 +119,18 @@ export const useNotifications = () => {
       await updateDoc(notificationRef, {
         read: true,
       });
+
+      // Atualiza o cache após marcar como lida
+      const cacheKey = `notifications_${user.id}`;
+      const updatedNotifications = notifications.filter(
+        (n) => n.id !== notificationId
+      );
+      await cacheService.set(cacheKey, updatedNotifications);
     } catch (error) {
-      console.error('Erro ao marcar notificação como lida:', error);
+      console.error(
+        '[Notifications] Erro ao marcar notificação como lida:',
+        error
+      );
       toast.error('Erro ao atualizar notificação');
     }
   };
@@ -112,19 +143,33 @@ export const useNotifications = () => {
 
     try {
       const batch = writeBatch(db);
-
-      notifications
+      const notificationIds = notifications
         .filter((n) => !n.read)
-        .forEach((n) => {
-          const ref = doc(db, 'user_notifications', n.id);
-          batch.update(ref, { read: true });
-        });
+        .map((n) => n.id);
+
+      setNotifications([]);
+      setUnreadCount(0);
+      const cacheKey = `notifications_${user.id}`;
+      await cacheService.set(cacheKey, []);
+
+      notificationIds.forEach((id) => {
+        const ref = doc(db, 'user_notifications', id);
+        batch.update(ref, { read: true });
+      });
 
       await batch.commit();
       toast.success('Todas as notificações foram marcadas como lidas');
     } catch (error) {
-      console.error('Erro ao marcar todas notificações como lidas:', error);
+      console.error(
+        '[Notifications] Erro ao marcar todas notificações como lidas:',
+        error
+      );
       toast.error('Erro ao atualizar notificações');
+
+      const snapshot = await getDocs(createNotificationsQuery(user.id));
+      const notificationsData = snapshot.docs.map(mapNotificationDoc);
+      setNotifications(notificationsData);
+      setUnreadCount(notificationsData.length);
     }
   };
 
@@ -141,24 +186,12 @@ export const useNotifications = () => {
     link: string
   ) => {
     try {
-      console.log('[Debug] Iniciando criação de notificações:', {
-        newsId,
-        category,
-        link,
-      });
-
-      // Busca usuários interessados na categoria
       const usersQuery = query(
         collection(db, 'users'),
         where('preferences.categories', 'array-contains', category)
       );
 
       const usersSnapshot = await getDocs(usersQuery);
-      console.log('[Debug] Usuários encontrados:', {
-        total: usersSnapshot.size,
-        category,
-      });
-
       const batch = writeBatch(db);
       const notificationsRef = collection(db, 'user_notifications');
 
@@ -176,11 +209,8 @@ export const useNotifications = () => {
       });
 
       await batch.commit();
-      console.log('[Debug] Notificações criadas com sucesso:', {
-        total: usersSnapshot.size,
-      });
     } catch (error) {
-      console.error('[Debug] Erro ao criar notificações:', error);
+      console.error('[Notifications] Erro ao criar notificações:', error);
       toast.error('Erro ao enviar notificações');
     }
   };

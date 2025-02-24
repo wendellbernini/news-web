@@ -18,8 +18,6 @@ export function Header() {
   const { signInWithGoogle } = useAuth();
   const router = useRouter();
 
-  console.log('Header rendering, user:', user); // Debug log
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {

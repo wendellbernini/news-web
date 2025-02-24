@@ -26,10 +26,7 @@ let adminAuth: Auth;
 let adminDb: Firestore;
 
 try {
-  console.log('[Admin Debug] Iniciando configuração do Firebase Admin');
-
   const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
-  console.log('[Admin Debug] Chave privada formatada');
 
   const firebaseAdminConfig = {
     credential: cert({
@@ -40,13 +37,9 @@ try {
     databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseio.com`,
   };
 
-  console.log('[Admin Debug] Configuração criada, iniciando app');
-
   const adminApp = !getApps().length
     ? initializeApp(firebaseAdminConfig)
     : getApps()[0];
-
-  console.log('[Admin Debug] App iniciado com sucesso');
 
   adminAuth = getAuth(adminApp);
   adminDb = getFirestore(adminApp);

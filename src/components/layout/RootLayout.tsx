@@ -15,9 +15,7 @@ interface RootLayoutProps {
 export function RootLayout({ children }: RootLayoutProps) {
   const { isDarkMode, user } = useStore();
 
-  useEffect(() => {
-    console.log('RootLayout mounted, user:', user); // Debug log
-  }, [user]);
+  useEffect(() => {}, [user]);
 
   return (
     <div className={isDarkMode ? 'dark' : ''} suppressHydrationWarning>

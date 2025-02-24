@@ -4,16 +4,10 @@ import * as React from 'react';
 import * as SwitchPrimitives from '@radix-ui/react-switch';
 import { cn } from '@/lib/utils';
 
-// Log para verificar se o módulo está sendo carregado
-console.log('Módulo Switch carregado');
-
 export const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
 >(({ className, ...props }, ref) => {
-  // Log para verificar se o componente está sendo renderizado
-  console.log('Componente Switch renderizado', { props });
-
   return (
     <SwitchPrimitives.Root
       className={cn(

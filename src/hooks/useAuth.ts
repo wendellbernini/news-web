@@ -26,74 +26,45 @@ export const useAuth = () => {
     let mounted = true;
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('[Auth Debug] Auth state changed:', firebaseUser?.uid);
-
       if (!mounted) return;
 
       if (firebaseUser) {
         try {
-          console.log(
-            '[Auth Debug] Obtendo token para usuário:',
-            firebaseUser.uid
-          );
-
-          // Obtém o token do usuário
-          const token = await firebaseUser.getIdToken(true); // Force refresh
-          console.log('[Auth Debug] Token obtido, salvando no cookie');
-
-          // Salva o token nos cookies com configurações mais específicas
+          const token = await firebaseUser.getIdToken(true);
           const secure = window.location.protocol === 'https:';
           const cookieString = `firebase-token=${token}; path=/; ${secure ? 'secure;' : ''} samesite=strict; max-age=3600`;
           document.cookie = cookieString;
-          console.log('[Auth Debug] Cookie salvo com configurações:', {
-            secure,
-            path: '/',
-            maxAge: '3600',
-          });
 
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          console.log(
-            '[Auth Debug] Documento do usuário existe?',
-            userDoc.exists()
-          );
 
           if (userDoc.exists()) {
             const userData = userDoc.data() as User;
-            console.log('[Auth Debug] Dados do usuário:', {
-              uid: userData.id,
-              role: userData.role,
-              email: userData.email,
-            });
             setUser(userData);
 
-            // Se estiver na página de login e for admin, redireciona para /admin
             if (
               window.location.pathname === '/login' &&
               userData.role === 'admin'
             ) {
-              console.log(
-                '[Auth Debug] Redirecionando admin para área administrativa'
-              );
               router.push('/admin');
             }
           } else {
-            console.log('[Auth Debug] Criando novo perfil de usuário');
             const userData = await createUserProfile(firebaseUser);
             setUser(userData);
           }
         } catch (error) {
-          console.error('[Auth Debug] Erro ao processar autenticação:', error);
+          console.error(
+            '[Auth] Erro crítico ao processar autenticação:',
+            error
+          );
           setUser(null);
           document.cookie =
             'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
         }
       } else {
-        console.log('[Auth Debug] Usuário deslogado, limpando dados');
         setUser(null);
         document.cookie =
           'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
 
-        // Se estiver em uma rota protegida, redireciona para login
         if (
           window.location.pathname.startsWith('/admin') ||
           window.location.pathname.startsWith('/perfil')
@@ -116,7 +87,6 @@ export const useAuth = () => {
   const createUserProfile = async (
     firebaseUser: FirebaseUser
   ): Promise<User> => {
-    console.log('Creating user profile for:', firebaseUser);
     const userRef = doc(db, 'users', firebaseUser.uid);
     const userData: User = {
       id: firebaseUser.uid,
@@ -146,38 +116,30 @@ export const useAuth = () => {
     };
 
     await setDoc(userRef, userData);
-    console.log('User profile saved:', userData);
     return userData;
   };
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Starting Google sign in...');
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      console.log('Google sign in result:', result);
 
       const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-      console.log('User doc exists:', userDoc.exists());
 
       if (!userDoc.exists()) {
-        console.log('Creating new user profile...');
         const userData = await createUserProfile(result.user);
-        console.log('New user profile created:', userData);
         setUser(userData);
       } else {
         const userData = userDoc.data() as User;
-        console.log('Existing user data:', userData);
         setUser(userData);
       }
 
-      // Obtém e salva o token após o login
       const token = await result.user.getIdToken();
       document.cookie = `firebase-token=${token}; path=/`;
 
       toast.success('Login realizado com sucesso!');
     } catch (error) {
-      console.error('Erro ao fazer login com Google:', error);
+      console.error('[Auth] Erro ao fazer login com Google:', error);
       toast.error('Erro ao fazer login com Google');
     }
   };
@@ -191,13 +153,12 @@ export const useAuth = () => {
         setUser(userDoc.data() as User);
       }
 
-      // Obtém e salva o token após o login
       const token = await result.user.getIdToken();
       document.cookie = `firebase-token=${token}; path=/`;
 
       toast.success('Login realizado com sucesso!');
     } catch (error) {
-      console.error('Erro ao fazer login:', error);
+      console.error('[Auth] Erro ao fazer login:', error);
       toast.error('Email ou senha inválidos');
     }
   };
@@ -220,13 +181,12 @@ export const useAuth = () => {
 
       setUser(userData);
 
-      // Obtém e salva o token após o cadastro
       const token = await result.user.getIdToken();
       document.cookie = `firebase-token=${token}; path=/`;
 
       toast.success('Conta criada com sucesso!');
     } catch (error) {
-      console.error('Erro ao criar conta:', error);
+      console.error('[Auth] Erro ao criar conta:', error);
       toast.error('Erro ao criar conta');
     }
   };
@@ -235,12 +195,11 @@ export const useAuth = () => {
     try {
       await signOut(auth);
       setUser(null);
-      // Remove o token dos cookies ao fazer logout
       document.cookie =
         'firebase-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
       toast.success('Logout realizado com sucesso!');
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      console.error('[Auth] Erro ao fazer logout:', error);
       toast.error('Erro ao fazer logout');
     }
   };
