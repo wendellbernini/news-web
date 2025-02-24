@@ -176,14 +176,15 @@ export type PushNotificationPreferences = {
 };
 
 /**
- * Configurações de cache do sistema
+ * Configurações do sistema de cache
+ * @remarks Usado para configurar o comportamento do cache em diferentes ambientes
  */
 export interface CacheConfig {
-  /** Se o cache está ativo */
+  /** Se o cache está habilitado */
   enabled: boolean;
-  /** Duração do cache em segundos */
+  /** Duração padrão do cache em segundos */
   duration: number;
-  /** Se o CDN está ativo */
+  /** Se o cache CDN está habilitado */
   cdnEnabled: boolean;
   /** URL base do CDN */
   cdnUrl: string;

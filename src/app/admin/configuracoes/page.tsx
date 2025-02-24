@@ -7,15 +7,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Switch } from '@/components/ui/Switch';
-import {
-  Settings,
-  Globe,
-  Mail,
-  FileText,
-  Database,
-  Save,
-  Loader2,
-} from 'lucide-react';
+import { Settings, Globe, Mail, FileText, Save, Loader2 } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { toast } from 'react-hot-toast';
@@ -48,21 +40,14 @@ interface EmailConfig {
   defaultTemplate: string;
 }
 
-interface CacheConfig {
-  enabled: boolean;
-  duration: number;
-  cdnEnabled: boolean;
-  cdnUrl: string;
-}
-
 export default function SettingsAdminPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    'site' | 'content' | 'email' | 'cache'
-  >('site');
+  const [activeTab, setActiveTab] = useState<'site' | 'content' | 'email'>(
+    'site'
+  );
 
   // Estados para cada seção de configuração
   const [siteConfig, setSiteConfig] = useState<SiteConfig>({
@@ -93,13 +78,6 @@ export default function SettingsAdminPage() {
     defaultTemplate: '',
   });
 
-  const [cacheConfig, setCacheConfig] = useState<CacheConfig>({
-    enabled: true,
-    duration: 3600,
-    cdnEnabled: false,
-    cdnUrl: '',
-  });
-
   useEffect(() => {
     if (!user || user.role !== 'admin') {
       router.push('/');
@@ -119,7 +97,6 @@ export default function SettingsAdminPage() {
         setSiteConfig(data.site || siteConfig);
         setContentConfig(data.content || contentConfig);
         setEmailConfig(data.email || emailConfig);
-        setCacheConfig(data.cache || cacheConfig);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -138,7 +115,6 @@ export default function SettingsAdminPage() {
         site: siteConfig,
         content: contentConfig,
         email: emailConfig,
-        cache: cacheConfig,
         updatedAt: new Date(),
         updatedBy: user?.id,
       });
@@ -220,15 +196,6 @@ export default function SettingsAdminPage() {
         >
           <Mail className="mr-2 h-4 w-4" />
           Email
-        </Button>
-        <Button
-          variant={activeTab === 'cache' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTab('cache')}
-          className="flex-1"
-        >
-          <Database className="mr-2 h-4 w-4" />
-          Cache
         </Button>
       </div>
 
@@ -509,66 +476,6 @@ export default function SettingsAdminPage() {
                       smtpPass: e.target.value,
                     }))
                   }
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Configurações de Cache */}
-        {activeTab === 'cache' && (
-          <div className="rounded-lg border border-secondary-200 bg-white p-6 dark:border-secondary-800 dark:bg-secondary-950">
-            <h2 className="mb-4 text-lg font-semibold">
-              Configurações de Cache
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Cache Ativo</label>
-                <Switch
-                  checked={cacheConfig.enabled}
-                  onCheckedChange={(checked) =>
-                    setCacheConfig((prev) => ({ ...prev, enabled: checked }))
-                  }
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  Duração do Cache (segundos)
-                </label>
-                <Input
-                  type="number"
-                  value={cacheConfig.duration}
-                  onChange={(e) =>
-                    setCacheConfig((prev) => ({
-                      ...prev,
-                      duration: parseInt(e.target.value),
-                    }))
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">CDN Ativo</label>
-                <Switch
-                  checked={cacheConfig.cdnEnabled}
-                  onCheckedChange={(checked) =>
-                    setCacheConfig((prev) => ({ ...prev, cdnEnabled: checked }))
-                  }
-                />
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">
-                  URL CDN
-                </label>
-                <Input
-                  value={cacheConfig.cdnUrl}
-                  onChange={(e) =>
-                    setCacheConfig((prev) => ({
-                      ...prev,
-                      cdnUrl: e.target.value,
-                    }))
-                  }
-                  placeholder="https://cdn.exemplo.com"
-                  disabled={!cacheConfig.cdnEnabled}
                 />
               </div>
             </div>

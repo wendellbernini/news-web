@@ -6,6 +6,7 @@ import {
   UserPreferences,
   NewsletterPreferences,
 } from '@/types';
+import { cookieService } from '@/lib/cookies';
 
 interface StoreState {
   // Auth
@@ -53,18 +54,43 @@ interface StoreState {
   updateNewsCommentCount: (newsSlug: string, increment: number) => void;
 }
 
+// Função auxiliar para obter tema inicial
+const getInitialTheme = (): boolean => {
+  // Se tiver cookies funcionais, usa a preferência salva
+  const { preferences, active } = cookieService.checkStatus();
+  if (active && preferences.functional) {
+    const userPrefs = cookieService.getUserPreferences();
+    if ('darkMode' in userPrefs && typeof userPrefs.darkMode === 'boolean') {
+      return userPrefs.darkMode;
+    }
+  }
+  // Fallback para preferência do sistema
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+};
+
 const useStore = create<StoreState>((set) => ({
   // Auth
   user: null,
   setUser: (user) =>
     set({
       user: user ? { ...user, savedNews: user.savedNews || [] } : null,
-      isDarkMode: user?.preferences?.darkMode || false,
+      isDarkMode: user?.preferences?.darkMode || getInitialTheme(),
     }),
 
   // Theme
-  isDarkMode: false,
-  toggleDarkMode: () => set((state) => ({ isDarkMode: !state.isDarkMode })),
+  isDarkMode: typeof window !== 'undefined' ? getInitialTheme() : false,
+  toggleDarkMode: () =>
+    set((state) => {
+      const newDarkMode = !state.isDarkMode;
+
+      // Se cookies funcionais estiverem ativos, salva a preferência
+      const { preferences } = cookieService.checkStatus();
+      if (preferences.functional) {
+        cookieService.saveUserPreference('darkMode', newDarkMode);
+      }
+
+      return { isDarkMode: newDarkMode };
+    }),
 
   // News
   news: [],
