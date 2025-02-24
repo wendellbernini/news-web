@@ -25,6 +25,11 @@ interface CacheData<T> {
   version: string;
 }
 
+interface CacheOptions {
+  ttl?: number;
+  useMemoryOnly?: boolean;
+}
+
 /**
  * Processa datas em objetos antes de serializar
  */
@@ -160,10 +165,12 @@ export class CacheService {
   /**
    * Salva dados no cache
    */
-  set<T>(key: string, data: T, useMemoryOnly = false): void {
+  set<T>(key: string, data: T, options?: CacheOptions | boolean): void {
     if (!this.config.enabled) return;
 
     const processedData = processDataForStorage(data);
+    const useMemoryOnly =
+      typeof options === 'boolean' ? options : options?.useMemoryOnly || false;
 
     // Sempre salva em memória
     this.setMemoryCache(key, processedData);

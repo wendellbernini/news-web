@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import {
   doc,
   getDoc,
@@ -23,9 +23,13 @@ interface ReadHistoryItem {
   status: 'active';
 }
 
+const READ_HISTORY_CACHE_TTL = 600; // 10 minutos
+const READ_HISTORY_DEBOUNCE = 3000; // 3 segundos
+
 export function useReadHistory() {
   const { user } = useAuth();
   const { addToReadHistory: addToLocalHistory } = useStore();
+  const debounceRef = useRef<NodeJS.Timeout>();
 
   const addToHistory = useCallback(
     async (newsId: string, newsSlug: string, newsTitle: string) => {
@@ -59,7 +63,7 @@ export function useReadHistory() {
             const userDoc = await getDoc(userRef);
             return userDoc.exists() ? userDoc.data().readHistory || [] : [];
           },
-          { ttl: 300 } // 5 minutos
+          { ttl: READ_HISTORY_CACHE_TTL }
         );
 
         const alreadyRead = cachedHistory.some(
@@ -86,41 +90,37 @@ export function useReadHistory() {
 
         console.log('DEBUG - Item a ser salvo:', historyItem);
 
-        // Adiciona ao array readHistory do usuário
-        try {
-          console.log('DEBUG - Iniciando updateDoc...');
-          const userRef = doc(db, 'users', user.id);
-          await updateDoc(userRef, {
-            readHistory: arrayUnion(historyItem),
-          });
-          console.log('DEBUG - updateDoc concluído com sucesso');
-
-          // Atualiza o cache com o novo item
-          const updatedHistory = [historyItem, ...cachedHistory];
-          cacheService.set(cacheKey, updatedHistory);
-        } catch (error) {
-          console.error('DEBUG - Erro no updateDoc:', error);
-
-          // Se o campo readHistory não existir, cria ele
-          if (
-            error instanceof Error &&
-            error.message.includes('No document to update')
-          ) {
-            console.log('DEBUG - Criando campo readHistory...');
+        // Debounce para atualizações no Firestore
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(async () => {
+          try {
             const userRef = doc(db, 'users', user.id);
-            await setDoc(
-              userRef,
-              { readHistory: [historyItem] },
-              { merge: true }
-            );
-            console.log('DEBUG - Campo readHistory criado com sucesso');
-
-            // Atualiza o cache
-            cacheService.set(cacheKey, [historyItem]);
-          } else {
-            throw error;
+            await updateDoc(userRef, {
+              readHistory: arrayUnion(historyItem),
+            });
+          } catch (error) {
+            if (
+              error instanceof Error &&
+              error.message.includes('No document to update')
+            ) {
+              const userRef = doc(db, 'users', user.id);
+              await setDoc(
+                userRef,
+                { readHistory: [historyItem] },
+                { merge: true }
+              );
+            } else {
+              throw error;
+            }
           }
-        }
+        }, READ_HISTORY_DEBOUNCE);
+
+        // Atualiza o cache imediatamente
+        const updatedHistory = [historyItem, ...cachedHistory];
+        await cacheService.set(cacheKey, updatedHistory, {
+          ttl: READ_HISTORY_CACHE_TTL,
+          useMemoryOnly: true,
+        });
 
         console.log('useReadHistory: Histórico atualizado com sucesso');
 

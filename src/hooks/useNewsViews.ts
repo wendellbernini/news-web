@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { doc, increment, updateDoc } from 'firebase/firestore';
+import { doc, increment, writeBatch } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { cacheService } from '@/lib/cache';
 
 const VIEWS_STORAGE_KEY = 'news_views';
-const VIEW_DEBOUNCE_TIME = 30000; // 30 segundos
+const VIEW_DEBOUNCE_TIME = 120000; // 2 minutos
+const BATCH_SIZE = 20; // Aumentado para reduzir número de escritas
+const VIEWS_CACHE_KEY = 'pending_views';
 
 export const useNewsViews = (newsId: string) => {
   const [hasViewed, setHasViewed] = useState(false);
@@ -25,45 +27,67 @@ export const useNewsViews = (newsId: string) => {
       }
 
       try {
-        // Usa o cache para controlar o debounce de visualizações
-        const cacheKey = `news_view_${newsId}`;
-        const lastViewTimestamp = await cacheService.get(
-          cacheKey,
-          async () => null,
-          { useMemoryOnly: true }
-        );
+        const viewKey = `news_view_${newsId}`;
 
-        const now = Date.now();
-        if (lastViewTimestamp && now - lastViewTimestamp < VIEW_DEBOUNCE_TIME) {
-          // Se a última visualização foi muito recente, não incrementa
+        // Verifica debounce usando apenas memória
+        const lastView = await cacheService.get(viewKey, async () => null, {
+          useMemoryOnly: true,
+        });
+
+        if (lastView && Date.now() - lastView < VIEW_DEBOUNCE_TIME) {
           return;
         }
 
-        // Atualiza o timestamp da última visualização
-        cacheService.set(cacheKey, now, true);
+        // Atualiza timestamp da visualização
+        await cacheService.set(viewKey, Date.now(), { useMemoryOnly: true });
 
-        // Atualiza o contador de views no Firestore
-        const newsRef = doc(db, 'news', newsId);
-        await updateDoc(newsRef, {
-          views: increment(1),
-        });
+        // Adiciona à lista de visualizações pendentes
+        const pendingViews = await cacheService.get<string[]>(
+          VIEWS_CACHE_KEY,
+          async () => [],
+          { useMemoryOnly: true }
+        );
 
-        // Marca a notícia como visualizada na sessão
+        if (!pendingViews.includes(newsId)) {
+          pendingViews.push(newsId);
+          await cacheService.set(VIEWS_CACHE_KEY, pendingViews, {
+            useMemoryOnly: true,
+          });
+        }
+
+        // Processa em batch se atingiu o limite
+        if (pendingViews.length >= BATCH_SIZE) {
+          const batch = writeBatch(db);
+          const uniqueViews = Array.from(new Set(pendingViews));
+
+          uniqueViews.forEach((id) => {
+            const newsRef = doc(db, 'news', id);
+            batch.update(newsRef, {
+              views: increment(1),
+              lastViewed: new Date(),
+            });
+          });
+
+          await batch.commit();
+          await cacheService.set(VIEWS_CACHE_KEY, [], { useMemoryOnly: true });
+        }
+
+        // Atualiza sessão
         const viewedNews = JSON.parse(
           sessionStorage.getItem(VIEWS_STORAGE_KEY) || '[]'
         );
-        viewedNews.push(newsId);
-        sessionStorage.setItem(VIEWS_STORAGE_KEY, JSON.stringify(viewedNews));
+        if (!viewedNews.includes(newsId)) {
+          viewedNews.push(newsId);
+          sessionStorage.setItem(VIEWS_STORAGE_KEY, JSON.stringify(viewedNews));
+        }
         setHasViewed(true);
       } catch (error) {
         console.error('Erro ao incrementar visualizações:', error);
       }
     };
 
-    if (newsId && !hasViewed) {
-      incrementViews();
-    }
-  }, [newsId, hasViewed]);
+    incrementViews();
+  }, [newsId]);
 
-  return { hasViewed };
+  return hasViewed;
 };

@@ -38,13 +38,20 @@ export const useNews = () => {
   } = useStore();
   const { createNotificationsForNews } = useNotifications();
 
+  const updateNewsList = (updater: (currentNews: News[]) => News[]) => {
+    const updated = updater(news);
+    setNews(updated);
+  };
+
   const fetchNews = useCallback(
     async (category?: Category) => {
       setLoading(true);
       try {
         const cacheKey = `news_list_${category || 'all'}`;
+        const stateKey = `news_state_${category || 'all'}`;
 
         const fetchFromFirestore = async () => {
+          // Query principal com campos essenciais
           const baseQuery = query(
             collection(db, 'news'),
             where('published', '==', true),
@@ -57,29 +64,80 @@ export const useNews = () => {
             : baseQuery;
 
           const snapshot = await getDocs(newsQuery);
-          const fetchedNews = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            createdAt: doc.data().createdAt?.seconds
-              ? new Date(doc.data().createdAt.seconds * 1000)
-              : new Date(),
-            updatedAt: doc.data().updatedAt?.seconds
-              ? new Date(doc.data().updatedAt.seconds * 1000)
-              : new Date(),
-          })) as News[];
 
+          // Processa os documentos em batch para melhor performance
+          const fetchedNews = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const data = doc.data();
+              const newsItem = {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.seconds
+                  ? new Date(data.createdAt.seconds * 1000)
+                  : new Date(),
+                updatedAt: data.updatedAt?.seconds
+                  ? new Date(data.updatedAt.seconds * 1000)
+                  : new Date(),
+              } as News;
+
+              // Usa cache local para dados complementares
+              const detailsCacheKey = `news_details_${doc.id}`;
+              const cachedDetails = await cacheService.get(
+                detailsCacheKey,
+                async () => ({}),
+                { useMemoryOnly: true }
+              );
+
+              return { ...newsItem, ...cachedDetails };
+            })
+          );
+
+          const hasMore = snapshot.docs.length === ITEMS_PER_PAGE;
           setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-          setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
+          setHasMore(hasMore);
+
+          // Salva o estado atual
+          await cacheService.set(
+            stateKey,
+            {
+              news: fetchedNews,
+              hasMore,
+              timestamp: Date.now(),
+            },
+            { useMemoryOnly: true }
+          );
 
           return fetchedNews;
         };
 
-        // Usa o serviço de cache com TTL de 5 minutos para lista de notícias
+        // Tenta recuperar estado salvo primeiro
+        const savedState = await cacheService.get<{
+          news: News[];
+          hasMore: boolean;
+          timestamp: number;
+        } | null>(stateKey, async () => null, { useMemoryOnly: true });
+
+        // Se tiver estado salvo e for recente (menos de 1 minuto), usa ele
+        if (savedState && Date.now() - savedState.timestamp < 60000) {
+          setNews(savedState.news);
+          setHasMore(savedState.hasMore);
+          setLoading(false);
+
+          // Atualiza em background
+          fetchFromFirestore().then((freshNews) => {
+            if (JSON.stringify(freshNews) !== JSON.stringify(savedState.news)) {
+              updateNewsList(() => freshNews);
+            }
+          });
+
+          return;
+        }
+
         const fetchedNews = await cacheService.get(
           cacheKey,
           fetchFromFirestore,
           {
-            ttl: 300, // 5 minutos
+            ttl: 900, // 15 minutos
           }
         );
 
@@ -100,33 +158,68 @@ export const useNews = () => {
 
       setLoading(true);
       try {
-        const baseQuery = query(
-          collection(db, 'news'),
-          where('published', '==', true),
-          orderBy('createdAt', 'desc'),
-          startAfter(lastDoc),
-          limit(ITEMS_PER_PAGE)
-        );
+        const pageKey = `${category || 'all'}_page_${news.length / ITEMS_PER_PAGE + 1}`;
+        const cacheKey = `news_list_${pageKey}`;
 
-        const newsQuery = category
-          ? query(baseQuery, where('category', '==', category))
-          : baseQuery;
+        const fetchFromFirestore = async () => {
+          const baseQuery = query(
+            collection(db, 'news'),
+            where('published', '==', true),
+            orderBy('createdAt', 'desc'),
+            startAfter(lastDoc),
+            limit(ITEMS_PER_PAGE)
+          );
 
-        const snapshot = await getDocs(newsQuery);
-        const moreNews = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.seconds
-            ? new Date(doc.data().createdAt.seconds * 1000)
-            : new Date(),
-          updatedAt: doc.data().updatedAt?.seconds
-            ? new Date(doc.data().updatedAt.seconds * 1000)
-            : new Date(),
-        })) as News[];
+          const newsQuery = category
+            ? query(baseQuery, where('category', '==', category))
+            : baseQuery;
 
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
-        setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
-        setNews([...news, ...moreNews]);
+          const snapshot = await getDocs(newsQuery);
+
+          // Processa os documentos em batch para melhor performance
+          const moreNews = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const data = doc.data();
+              const newsItem = {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.seconds
+                  ? new Date(data.createdAt.seconds * 1000)
+                  : new Date(),
+                updatedAt: data.updatedAt?.seconds
+                  ? new Date(data.updatedAt.seconds * 1000)
+                  : new Date(),
+              } as News;
+
+              // Usa cache local para dados complementares
+              const detailsCacheKey = `news_details_${doc.id}`;
+              const cachedDetails = await cacheService.get(
+                detailsCacheKey,
+                async () => ({}),
+                { useMemoryOnly: true }
+              );
+
+              return { ...newsItem, ...cachedDetails };
+            })
+          );
+
+          setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+          setHasMore(snapshot.docs.length === ITEMS_PER_PAGE);
+
+          return moreNews;
+        };
+
+        // Cache com TTL menor para páginas subsequentes
+        const moreNews = await cacheService.get(cacheKey, fetchFromFirestore, {
+          ttl: 600, // 10 minutos para páginas subsequentes
+          useMemoryOnly: true, // Usa apenas memória para reduzir overhead
+        });
+
+        updateNewsList((currentNews) => {
+          const newIds = new Set(moreNews.map((n) => n.id));
+          const filteredCurrent = currentNews.filter((n) => !newIds.has(n.id));
+          return [...filteredCurrent, ...moreNews];
+        });
       } catch (error) {
         console.error('Erro ao buscar mais notícias:', error);
         toast.error('Erro ao carregar mais notícias');
@@ -134,7 +227,7 @@ export const useNews = () => {
         setLoading(false);
       }
     },
-    [lastDoc, hasMore, setNews, news]
+    [lastDoc, hasMore, news.length, setNews]
   );
 
   const getNewsById = useCallback(async (id: string): Promise<News | null> => {
@@ -171,24 +264,23 @@ export const useNews = () => {
 
   const searchNews = useCallback(
     async (searchQuery: string) => {
-      console.log('[Debug] searchNews chamado com query:', searchQuery);
-
       if (!searchQuery.trim()) {
-        console.log('[Debug] Query vazia, limpando resultados');
         setNews([]);
         return;
       }
 
       setLoading(true);
       try {
-        const cacheKey = `search_${searchQuery.toLowerCase().trim()}`;
+        const searchQueryLower = searchQuery.toLowerCase().trim();
+        const cacheKey = `search_${searchQueryLower}`;
 
         const fetchFromFirestore = async () => {
+          // Limita a busca aos últimos 100 artigos para melhor performance
           const newsQuery = query(
             collection(db, 'news'),
             where('published', '==', true),
-            orderBy('title'),
-            limit(20)
+            orderBy('createdAt', 'desc'),
+            limit(100)
           );
 
           const snapshot = await getDocs(newsQuery);
@@ -206,18 +298,24 @@ export const useNews = () => {
             };
           }) as News[];
 
-          const searchQueryLower = searchQuery.toLowerCase();
-          return newsData.filter(
-            (news) =>
-              news.title.toLowerCase().includes(searchQueryLower) ||
-              news.content.toLowerCase().includes(searchQueryLower)
-          );
+          // Filtra localmente usando índices de texto para melhor performance
+          return newsData
+            .filter((news) => {
+              const titleMatch = news.title
+                .toLowerCase()
+                .includes(searchQueryLower);
+              if (titleMatch) return true;
+
+              // Só verifica o conteúdo se não encontrou no título
+              const contentPreview = news.content.slice(0, 1000).toLowerCase();
+              return contentPreview.includes(searchQueryLower);
+            })
+            .slice(0, 20); // Limita a 20 resultados
         };
 
-        // Usa o serviço de cache com TTL de 5 minutos para resultados de busca
         const results = await cacheService.get(cacheKey, fetchFromFirestore, {
-          ttl: 300, // 5 minutos
-          useMemoryOnly: true, // Usa apenas cache em memória para buscas
+          ttl: 600, // 10 minutos de cache para buscas
+          useMemoryOnly: true,
         });
 
         setNews(results);

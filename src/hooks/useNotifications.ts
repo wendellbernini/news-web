@@ -20,6 +20,9 @@ import { Notification } from '@/types';
 import useStore from '@/store/useStore';
 import { cacheService } from '@/lib/cache';
 
+const NOTIFICATIONS_DEBOUNCE = 5000; // 5 segundos
+const NOTIFICATIONS_CACHE_TTL = 300; // 5 minutos
+
 /**
  * Hook para gerenciar notificações do usuário
  * @returns Objeto com estado e funções para gerenciar notificações
@@ -74,15 +77,22 @@ export const useNotifications = () => {
 
     const notificationsQuery = createNotificationsQuery(user.id);
     const cacheKey = `notifications_${user.id}`;
+    let debounceTimer: NodeJS.Timeout;
 
     const unsubscribe = onSnapshot(
       notificationsQuery,
       async (snapshot) => {
-        const notificationsData = snapshot.docs.map(mapNotificationDoc);
-        await cacheService.set(cacheKey, notificationsData);
-        setNotifications(notificationsData);
-        setUnreadCount(notificationsData.length);
-        setLoading(false);
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          const notificationsData = snapshot.docs.map(mapNotificationDoc);
+          await cacheService.set(cacheKey, notificationsData, {
+            ttl: NOTIFICATIONS_CACHE_TTL,
+            useMemoryOnly: true,
+          });
+          setNotifications(notificationsData);
+          setUnreadCount(notificationsData.length);
+          setLoading(false);
+        }, NOTIFICATIONS_DEBOUNCE);
       },
       (error) => {
         console.error('[Notifications] Erro ao buscar notificações:', error);
