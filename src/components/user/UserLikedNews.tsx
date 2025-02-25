@@ -1,21 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useAuth } from '@/hooks/useAuth';
-import { formatDate } from '@/lib/utils';
+import { NewsCard } from '@/components/news/NewsCard';
 import { Loader2 } from 'lucide-react';
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDocs,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
+import { db } from '@/lib/firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 export function UserLikedNews() {
   const { user } = useAuth();
@@ -24,64 +16,47 @@ export function UserLikedNews() {
 
   useEffect(() => {
     const fetchLikedNews = async () => {
-      if (!user?.uid) {
+      if (!user) {
+        setNews([]);
         setLoading(false);
         return;
       }
 
       try {
-        const likesQuery = query(
-          collection(db, 'likes'),
-          where('userId', '==', user.uid),
-          orderBy('createdAt', 'desc'),
-          limit(10)
-        );
+        // Busca apenas as 10 últimas notícias curtidas
+        const userDoc = await getDoc(doc(db, 'users', user.id));
+        if (!userDoc.exists()) return;
 
-        const likesSnapshot = await getDocs(likesQuery);
-        const newsIds = likesSnapshot.docs
-          .map((doc) => doc.data().newsId)
-          .filter(
-            (id): id is string => typeof id === 'string' && id.length > 0
-          );
+        const userData = userDoc.data();
+        const likedNewsIds = (userData.likedNews || []).slice(0, 10);
 
-        if (newsIds.length === 0) {
+        if (likedNewsIds.length === 0) {
           setNews([]);
-          setLoading(false);
           return;
         }
 
-        const newsQuery = query(
-          collection(db, 'news'),
-          where('id', 'in', newsIds)
-        );
+        // Busca cada notícia individualmente
+        const newsPromises = likedNewsIds.map(async (newsId: string) => {
+          const newsDoc = await getDoc(doc(db, 'news', newsId));
+          if (!newsDoc.exists()) return null;
+          return { id: newsDoc.id, ...newsDoc.data() } as News;
+        });
 
-        const newsSnapshot = await getDocs(newsQuery);
-        const newsData = newsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as News[];
+        const newsResults = await Promise.all(newsPromises);
+        const validNews = newsResults.filter((n): n is News => n !== null);
 
-        setNews(newsData);
+        setNews(validNews);
       } catch (error) {
-        console.error('Erro ao buscar notícias curtidas:', error);
-        setNews([]);
+        console.error('Erro ao carregar notícias curtidas:', error);
+        toast.error('Erro ao carregar notícias curtidas');
       } finally {
         setLoading(false);
       }
     };
 
+    setLoading(true);
     fetchLikedNews();
   }, [user]);
-
-  if (!user) {
-    return (
-      <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-        <p className="text-center text-secondary-600 dark:text-secondary-400">
-          Faça login para ver suas notícias curtidas
-        </p>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -92,47 +67,14 @@ export function UserLikedNews() {
   }
 
   return (
-    <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-      <h2 className="mb-4 text-xl font-bold">Notícias Curtidas</h2>
-
+    <div className="grid gap-6 sm:grid-cols-2">
       {news.length > 0 ? (
-        <div className="space-y-4">
-          {news.map((item) => (
-            <Link
-              key={item.id}
-              href={`/noticias/${item.slug}`}
-              className="group block"
-            >
-              <div className="flex gap-4">
-                <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded-lg">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.title}
-                    fill
-                    className="object-cover transition-transform group-hover:scale-105"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-medium group-hover:text-primary-600">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-sm text-secondary-600 dark:text-secondary-400">
-                    {item.summary}
-                  </p>
-                  <time
-                    dateTime={item.createdAt.toISOString()}
-                    className="mt-2 text-xs text-secondary-500 dark:text-secondary-500"
-                  >
-                    {formatDate(item.createdAt)}
-                  </time>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        news.map((item) => (
+          <NewsCard key={item.id} news={item} variant="minimal" />
+        ))
       ) : (
-        <p className="text-center text-secondary-600 dark:text-secondary-400">
-          Você ainda não curtiu nenhuma notícia
+        <p className="col-span-2 text-center text-secondary-600">
+          Nenhuma notícia curtida ainda.
         </p>
       )}
     </div>

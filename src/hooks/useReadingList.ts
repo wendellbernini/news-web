@@ -11,11 +11,13 @@ import {
   getDocs,
   addDoc,
   deleteDoc,
+  doc,
+  getDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { cacheService } from '@/lib/cache';
 
-export const useReadingList = () => {
+export function useReadingList() {
   const { user, addToReadHistory, setUser } = useStore();
   const [readHistory, setReadHistory] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,41 +84,37 @@ export const useReadingList = () => {
     return () => clearTimeout(timeoutId);
   }, [user?.savedNews]);
 
-  // Carrega o histórico de leitura
   useEffect(() => {
     const fetchReadHistory = async () => {
       if (!user?.readHistory.length) {
         setReadHistory([]);
+        setLoading(false);
         return;
       }
 
       try {
-        const newsIds = user.readHistory.map((item) => item.newsId);
-        const newsQuery = query(
-          collection(db, 'news'),
-          where('id', 'in', newsIds)
-        );
+        // Pega apenas os 10 últimos itens do histórico
+        const latestHistory = user.readHistory.slice(0, 10);
 
-        const snapshot = await getDocs(newsQuery);
-        const newsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as News[];
+        // Busca cada notícia individualmente
+        const newsPromises = latestHistory.map(async (item) => {
+          const newsDoc = await getDoc(doc(db, 'news', item.newsId));
+          if (!newsDoc.exists()) return null;
+          return { id: newsDoc.id, ...newsDoc.data() } as News;
+        });
 
-        // Ordena as notícias na mesma ordem do histórico
-        const orderedNews = user.readHistory
-          .map((historyItem) =>
-            newsData.find((news) => news.id === historyItem.newsId)
-          )
-          .filter((news): news is News => news !== undefined);
+        const newsResults = await Promise.all(newsPromises);
+        const validNews = newsResults.filter((n): n is News => n !== null);
 
-        setReadHistory(orderedNews);
+        setReadHistory(validNews);
       } catch (error) {
-        console.error('Erro ao carregar histórico de leitura:', error);
-        toast.error('Erro ao carregar histórico de leitura');
+        console.error('Erro ao carregar histórico:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
+    setLoading(true);
     fetchReadHistory();
   }, [user?.readHistory]);
 
@@ -177,17 +175,16 @@ export const useReadingList = () => {
     }
   };
 
-  const updateReadProgress = (newsId: string, progress: number) => {
+  const addToHistory = async (newsId: string, progress = 0) => {
     if (!user) return;
-
     addToReadHistory(newsId, progress);
   };
 
   return {
-    loading,
     readHistory,
+    loading,
     toggleSaveNews,
-    updateReadProgress,
+    addToHistory,
     isSaved: (newsId: string) => user?.savedNews.includes(newsId) || false,
   };
-};
+}
