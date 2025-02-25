@@ -69,8 +69,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const isDark = localStorage.getItem('darkMode') === 'true' ||
-                             (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('darkMode'));
+                const isDark = localStorage.getItem('darkMode') === 'true';
                 if (isDark) document.documentElement.classList.add('dark');
               } catch (e) {}
             `,

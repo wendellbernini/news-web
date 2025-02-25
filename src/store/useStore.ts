@@ -66,8 +66,15 @@ const getInitialTheme = (): boolean => {
       return userPrefs.darkMode;
     }
   }
-  // Fallback para preferência do sistema
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  // Verifica localStorage
+  const darkMode = localStorage.getItem('darkMode');
+  if (darkMode !== null) {
+    return darkMode === 'true';
+  }
+
+  // Padrão é modo claro
+  return false;
 };
 
 const useStore = create<StoreState>((set) => ({

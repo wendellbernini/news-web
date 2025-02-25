@@ -105,20 +105,23 @@ class CookieService {
         }
       }
 
-      // Fallback para cookies
+      // Tenta cookies
       const prefs = document.cookie
         .split('; ')
         .find((row) => row.startsWith(this.USER_PREFS_KEY));
 
       if (prefs) {
         const [, value] = prefs.split('=');
-        return JSON.parse(decodeURIComponent(value));
+        const parsedPrefs = JSON.parse(decodeURIComponent(value));
+        return parsedPrefs;
       }
+
+      // Retorna objeto vazio (que resultará em tema claro por padrão)
+      return {};
     } catch (error) {
       console.error('🍪 Erro ao ler preferências do usuário:', error);
+      return {};
     }
-
-    return {};
   }
 
   /**
