@@ -157,15 +157,12 @@ export function LoginForm() {
 
         <p className="text-center text-xs text-gray-600">
           Ao fazer login ou se registrar, você concorda com nossos{' '}
-          <Link
-            href="/termos-de-uso"
-            className="text-blue-600 hover:text-blue-500"
-          >
+          <Link href="/termos" className="text-blue-600 hover:text-blue-500">
             Termos de Uso
           </Link>{' '}
           e confirma que leu nossa{' '}
           <Link
-            href="/politica-de-privacidade"
+            href="/privacidade"
             className="text-blue-600 hover:text-blue-500"
           >
             Política de Privacidade
