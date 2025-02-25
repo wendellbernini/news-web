@@ -8,13 +8,13 @@ import {
   getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   doc,
   where,
   getDoc,
   QueryDocumentSnapshot,
   DocumentData,
   DocumentSnapshot,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News, Category } from '@/types';
@@ -309,11 +309,39 @@ export const useNews = () => {
   const deleteNews = useCallback(
     async (id: string) => {
       try {
-        await deleteDoc(doc(db, 'news', id));
-        deleteNewsFromStore(id);
+        // Inicia uma transação em lote
+        const batch = writeBatch(db);
 
+        // 1. Busca todas as notificações relacionadas à notícia
+        const notificationsQuery = query(
+          collection(db, 'user_notifications'),
+          where('newsId', '==', id)
+        );
+        const notificationsSnapshot = await getDocs(notificationsQuery);
+
+        // 2. Adiciona operações de exclusão das notificações ao batch
+        notificationsSnapshot.docs.forEach((notificationDoc) => {
+          batch.delete(notificationDoc.ref);
+        });
+
+        // 3. Adiciona operação de exclusão da notícia ao batch
+        batch.delete(doc(db, 'news', id));
+
+        // 4. Executa todas as operações de forma atômica
+        await batch.commit();
+
+        // 5. Atualiza o estado local e limpa os caches
+        deleteNewsFromStore(id);
         cacheService.remove(`news_${id}`);
         cacheService.remove('news_list_all');
+
+        // 6. Limpa o cache de notificações para todos os usuários afetados
+        const affectedUserIds = new Set(
+          notificationsSnapshot.docs.map((doc) => doc.data().userId)
+        );
+        affectedUserIds.forEach((userId) => {
+          cacheService.remove(`notifications_${userId}`);
+        });
 
         return id;
       } catch (error) {
