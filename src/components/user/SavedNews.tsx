@@ -135,13 +135,14 @@ export function SavedNews({ onToggleSave }: SavedNewsProps) {
           <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
         </div>
       ) : savedNews.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="flex flex-col space-y-6">
           {savedNews.map((news) => (
             <NewsCard
               key={`${news.id}-${news.createdAt.getTime()}`}
               news={news}
               onShare={() => handleShare(news.id)}
               onToggleSave={onToggleSave}
+              variant="default"
             />
           ))}
         </div>
