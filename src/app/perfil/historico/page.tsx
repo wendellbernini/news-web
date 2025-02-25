@@ -209,38 +209,42 @@ export default function HistoricoPage() {
           <p className="text-gray-500">Nenhuma notícia lida ainda.</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="flex flex-col space-y-6">
           {history.map(
             (item) =>
               item.news && (
                 <Link
                   key={`${item.newsId}_${item.readAt.toDate().getTime()}`}
                   href={`/noticias/${item.news.slug}`}
-                  className="block rounded-lg bg-white shadow transition-shadow hover:shadow-md"
+                  className="block overflow-hidden rounded-lg bg-white shadow transition-all hover:shadow-lg"
                 >
-                  <div className="flex items-start gap-4 p-4">
-                    {item.news.imageUrl && (
-                      <div className="flex-shrink-0">
-                        <Image
-                          src={item.news.imageUrl}
-                          alt={item.news.title}
-                          width={120}
-                          height={80}
-                          className="rounded object-cover"
-                        />
+                  <div className="flex gap-4">
+                    <div className="relative h-[200px] w-[300px] shrink-0 overflow-hidden">
+                      <Image
+                        src={item.news.imageUrl}
+                        alt={item.news.title}
+                        fill
+                        className="object-cover transition-transform duration-300 hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 300px"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <span className="absolute bottom-3 left-3 rounded-full bg-primary-600 px-2.5 py-0.5 text-xs font-medium text-white">
+                        {item.news.category}
+                      </span>
+                    </div>
+                    <div className="flex flex-col justify-between py-3 pr-3">
+                      <div className="space-y-2">
+                        <h3 className="line-clamp-2 text-xl font-semibold group-hover:text-primary-600">
+                          {item.news.title}
+                        </h3>
+                        <p className="line-clamp-3 text-sm text-secondary-600 dark:text-secondary-400">
+                          {item.news.summary}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex-grow">
-                      <h2 className="mb-2 text-lg font-semibold">
-                        {item.news.title}
-                      </h2>
-                      <p className="mb-2 text-sm text-gray-600">
-                        {item.news.summary}
-                      </p>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <span>{formatDate(item.readAt.toDate())}</span>
-                        <span className="mx-2">•</span>
-                        <span>{item.news.category}</span>
+                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                        <time dateTime={item.readAt.toDate().toISOString()}>
+                          {formatDate(item.readAt.toDate())}
+                        </time>
                       </div>
                     </div>
                   </div>
