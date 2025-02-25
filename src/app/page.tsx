@@ -4,6 +4,8 @@ import { NewsFeed } from '@/components/news/NewsFeed';
 import { FeaturedNews } from '@/components/news/FeaturedNews';
 import { CategoryFilter } from '@/components/news/CategoryFilter';
 import { Loader2 } from 'lucide-react';
+import { NewsletterSection } from '@/components/newsletter/NewsletterSection';
+import { CategoryNewsSection } from '@/components/news/CategoryNewsSection';
 
 export default function Home() {
   return (
@@ -37,6 +39,20 @@ export default function Home() {
             <NewsFeed />
           </Suspense>
         </div>
+
+        <NewsletterSection />
+
+        <CategoryNewsSection
+          title="Política"
+          category="Política"
+          accentColor="bg-orange-600 text-orange-600"
+        />
+
+        <CategoryNewsSection
+          title="Economia"
+          category="Economia"
+          accentColor="bg-rose-600 text-rose-600"
+        />
       </div>
     </RootLayout>
   );

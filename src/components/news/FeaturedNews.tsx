@@ -26,7 +26,7 @@ export function FeaturedNews() {
           collection(db, 'news'),
           where('published', '==', true),
           orderBy('createdAt', 'desc'),
-          limit(6)
+          limit(5)
         );
 
         const snapshot = await getDocs(newsQuery);
@@ -140,7 +140,7 @@ export function FeaturedNews() {
 
       {/* Área das notícias mais lidas - ocupa 2/5 do espaço */}
       <div className="lg:col-span-2">
-        <div className="rounded-xl border border-secondary-200 p-6">
+        <div className="p-6">
           <h3 className="mb-4 text-lg font-bold">Mais Lidas</h3>
           <div className="space-y-4">
             {featuredNews.map((news, index) => (
@@ -157,6 +157,7 @@ export function FeaturedNews() {
                   {news.category}
                 </span>
                 <h4 className="line-clamp-2 text-base font-semibold group-hover:text-primary-600">
+                  <span className="mr-2 text-primary-600">{index + 1}.</span>
                   {news.title}
                 </h4>
               </Link>
