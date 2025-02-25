@@ -1,31 +1,22 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useInView } from 'react-intersection-observer';
 import { NewsCard } from './NewsCard';
 import { useNews } from '@/hooks/useNews';
 import { useReadingList } from '@/hooks/useReadingList';
 import useStore from '@/store/useStore';
-import { Button } from '@/components/ui/Button';
-import { Loader2 } from 'lucide-react';
+import { News } from '@/types';
 
 export function NewsFeed() {
   const { news, selectedCategory } = useStore();
-  const { fetchNews, fetchMoreNews, hasMore } = useNews();
+  const { fetchNews } = useNews();
   const { toggleSaveNews } = useReadingList();
-  const { ref, inView } = useInView();
 
   useEffect(() => {
     fetchNews(selectedCategory || undefined);
-  }, [selectedCategory]);
+  }, [selectedCategory, fetchNews]);
 
-  useEffect(() => {
-    if (inView && hasMore) {
-      fetchMoreNews(selectedCategory || undefined);
-    }
-  }, [inView, hasMore, selectedCategory]);
-
-  const handleShare = async (news: any) => {
+  const handleShare = async (news: News) => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -45,34 +36,33 @@ export function NewsFeed() {
 
   return (
     <div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {news.map((item) => (
-          <NewsCard
-            key={item.id}
-            news={item}
-            onShare={handleShare}
-            onToggleSave={toggleSaveNews}
-          />
-        ))}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="space-y-6">
+          {news.slice(0, 2).map((item) => (
+            <NewsCard
+              key={item.id}
+              news={item}
+              onShare={handleShare}
+              onToggleSave={toggleSaveNews}
+              variant="default"
+            />
+          ))}
+        </div>
+        <div className="space-y-5">
+          {news.slice(2, 5).map((item) => (
+            <NewsCard
+              key={item.id}
+              news={item}
+              onShare={handleShare}
+              onToggleSave={toggleSaveNews}
+              variant="minimal"
+            />
+          ))}
+        </div>
       </div>
 
-      {hasMore && (
-        <div ref={ref} className="mt-8 flex items-center justify-center">
-          <Button variant="ghost" disabled>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Carregando mais notícias...
-          </Button>
-        </div>
-      )}
-
-      {!hasMore && news.length > 0 && (
-        <p className="mt-8 text-center text-sm text-secondary-600 dark:text-secondary-400">
-          Não há mais notícias para carregar.
-        </p>
-      )}
-
       {news.length === 0 && (
-        <div className="flex h-96 items-center justify-center">
+        <div className="flex h-48 items-center justify-center">
           <p className="text-center text-sm text-secondary-600 dark:text-secondary-400">
             Nenhuma notícia encontrada.
           </p>
