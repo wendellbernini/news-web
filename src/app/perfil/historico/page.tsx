@@ -114,7 +114,7 @@ export default function HistoricoPage() {
           }
 
           return {
-            id: item.newsId, // Usando newsId como id já que não temos um id específico no array
+            id: `${item.newsId}_${createdAt.getTime()}`, // Chave única combinando newsId e timestamp
             newsId: item.newsId,
             userId: user.id,
             createdAt,
