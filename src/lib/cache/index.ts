@@ -124,6 +124,18 @@ export class CacheService {
   updateConfig(newConfig: Partial<CacheConfig>): void {
     this.config = { ...this.config, ...newConfig };
   }
+
+  /**
+   * Limpa o cache de um usuário específico
+   */
+  clearUserCache(userId: string): void {
+    // Remove todos os itens que contenham o ID do usuário
+    Array.from(this.cache.keys())
+      .filter((key) => key.includes(userId))
+      .forEach((key) => this.cache.delete(key));
+
+    console.debug(`Cache limpo para usuário: ${userId}`);
+  }
 }
 
 // Exporta instância única do serviço

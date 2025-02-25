@@ -9,10 +9,9 @@ import { Loader2 } from 'lucide-react';
 import {
   doc,
   getDoc,
-  collection,
-  query,
-  where,
-  getDocs,
+  DocumentData,
+  DocumentSnapshot,
+  Firestore,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
@@ -61,24 +60,32 @@ export default function HistoricoPage() {
         setLoading(true);
         setError(null);
 
-        const cacheKey = `user_history_${user.id}_${page}`;
+        // Usa a mesma chave de cache do useReadHistory
+        const cacheKey = `read_history_${user.id}`;
 
         const fetchHistoryData = async () => {
+          console.log('Buscando histórico para usuário:', user.id);
+
           // Busca o documento do usuário
           const userRef = doc(db, 'users', user.id);
           const userDoc = await getDoc(userRef);
 
           if (!userDoc.exists()) {
+            console.error('Documento do usuário não encontrado:', user.id);
             throw new Error('Usuário não encontrado');
           }
 
           const userData = userDoc.data();
+          console.log('Dados do usuário:', userData);
+
           const readHistory = userData.readHistory || [];
+          console.log('Total de itens no histórico:', readHistory.length);
 
           // Aplica paginação no histórico
           const start = (page - 1) * ITEMS_PER_PAGE;
           const end = start + ITEMS_PER_PAGE;
           const paginatedHistory = readHistory.slice(start, end);
+          console.log('Itens após paginação:', paginatedHistory.length);
 
           // Verifica se há mais itens
           setHasMore(readHistory.length > end);
@@ -88,31 +95,43 @@ export default function HistoricoPage() {
           }
 
           // Coleta IDs únicos das notícias
-          const newsIds = Array.from(
+          const newsIds: string[] = Array.from(
             new Set(
               paginatedHistory.map((item: UserHistoryItem) => item.newsId)
             )
           );
+          console.log('IDs únicos de notícias:', newsIds);
 
           // Busca todas as notícias em uma única query
-          const newsQuery = query(
-            collection(db, 'news'),
-            where('id', 'in', newsIds)
+          const newsPromises = newsIds.map((newsId: string) =>
+            getDoc(doc(db as Firestore, 'news', newsId))
           );
 
-          const newsSnapshot = await getDocs(newsQuery);
+          const newsSnapshots = await Promise.all(newsPromises);
+          console.log('Notícias encontradas:', newsSnapshots.length);
+
           const newsMap = new Map(
-            newsSnapshot.docs.map((doc) => [
-              doc.id,
-              { id: doc.id, ...doc.data() } as News,
-            ])
+            newsSnapshots
+              .filter((doc): doc is DocumentSnapshot<DocumentData> =>
+                doc.exists()
+              )
+              .map((doc) => [doc.id, { id: doc.id, ...doc.data() } as News])
           );
 
           // Monta o histórico com as notícias
-          return paginatedHistory.map((item: UserHistoryItem) => ({
-            ...item,
-            news: newsMap.get(item.newsId) || null,
-          }));
+          const result = paginatedHistory.map((item: UserHistoryItem) => {
+            const news = newsMap.get(item.newsId);
+            if (!news) {
+              console.warn('Notícia não encontrada:', item.newsId);
+            }
+            return {
+              ...item,
+              news: news || null,
+            };
+          });
+
+          console.log('Histórico montado:', result.length);
+          return result;
         };
 
         // Usa cache para reduzir leituras

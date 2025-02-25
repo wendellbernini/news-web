@@ -16,6 +16,7 @@ import useStore from '@/store/useStore';
 import { User } from '@/types';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+import { cacheService } from '@/lib/cache';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,9 @@ export const useAuth = () => {
             ) {
               router.push('/admin');
             }
+
+            // Limpa o cache do usuário ao fazer login
+            cacheService.clearUserCache(firebaseUser.uid);
           } else {
             const userData = await createUserProfile(firebaseUser);
             setUser(userData);
