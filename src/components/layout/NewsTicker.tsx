@@ -16,6 +16,11 @@ export function NewsTicker() {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [weather, setWeather] = useState<Weather | null>(null);
 
+  // Reseta o índice quando as notícias mudam
+  useEffect(() => {
+    setCurrentNewsIndex(0);
+  }, [news]);
+
   // Busca a temperatura do Rio
   const fetchWeather = async () => {
     try {
@@ -57,16 +62,22 @@ export function NewsTicker() {
 
   // Alterna entre as notícias a cada 5 segundos
   useEffect(() => {
-    if (news.length === 0) return;
+    if (!news?.length) return;
+
     const interval = setInterval(() => {
       setCurrentNewsIndex((prev) => (prev + 1) % news.length);
     }, 5000);
-    return () => clearInterval(interval);
-  }, [news.length]);
 
-  if (news.length === 0) return null;
+    return () => clearInterval(interval);
+  }, [news]);
+
+  // Não renderiza nada se não houver notícias ou se estiver carregando
+  if (!news?.length) return null;
 
   const currentNews = news[currentNewsIndex];
+
+  // Verificação extra de segurança
+  if (!currentNews?.slug || !currentNews?.title) return null;
 
   return (
     <div className="bg-black text-white dark:bg-[rgb(33,33,33)]">
