@@ -6,9 +6,20 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDate } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
+import { cacheService } from '@/lib/cache';
+
+const ITEMS_PER_PAGE = 20;
+const HISTORY_CACHE_TTL = 1800; // 30 minutos
 
 interface UserHistoryItem {
   id?: string;
@@ -23,14 +34,8 @@ interface UserHistoryItem {
   };
 }
 
-interface HistoryItem {
-  id: string;
-  newsId: string;
-  userId: string;
-  createdAt: Date;
-  news: News;
-  newsSlug?: string;
-  newsTitle?: string;
+interface HistoryItem extends UserHistoryItem {
+  news: News | null;
 }
 
 export default function HistoricoPage() {
@@ -38,174 +43,93 @@ export default function HistoricoPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
-    console.log('HistoricoPage: Estado inicial:', {
-      authLoading,
-      userExists: !!user,
-      userId: user?.id,
-      loading,
-      historyLength: history.length,
-    });
-
     let isMounted = true;
 
+    if (!user?.id || authLoading) {
+      if (isMounted) {
+        setLoading(false);
+      }
+      return;
+    }
+
     const fetchReadHistory = async () => {
-      if (authLoading) {
-        console.log('HistoricoPage: Aguardando autenticação...');
-        return;
-      }
-
-      if (!user?.id) {
-        console.log('HistoricoPage: Usuário não autenticado');
-        if (isMounted) {
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
-        console.log('HistoricoPage: Iniciando busca para usuário:', user.id);
         setLoading(true);
         setError(null);
 
-        // Busca o documento do usuário
-        const userRef = doc(db, 'users', user.id);
-        const userDoc = await getDoc(userRef);
+        const cacheKey = `user_history_${user.id}_${page}`;
 
-        if (!userDoc.exists()) {
-          console.error('HistoricoPage: Usuário não encontrado no Firestore');
-          if (isMounted) {
-            setError('Usuário não encontrado');
-            setLoading(false);
-          }
-          return;
-        }
+        const fetchHistoryData = async () => {
+          // Busca o documento do usuário
+          const userRef = doc(db, 'users', user.id);
+          const userDoc = await getDoc(userRef);
 
-        const userData = userDoc.data();
-        const readHistory = userData.readHistory || [];
-
-        console.log('HistoricoPage: Histórico obtido:', {
-          total: readHistory.length,
-          items: readHistory,
-        });
-
-        if (readHistory.length === 0) {
-          console.log('HistoricoPage: Nenhum histórico encontrado');
-          if (isMounted) {
-            setHistory([]);
-            setLoading(false);
-          }
-          return;
-        }
-
-        const historyItems = readHistory.map((item: UserHistoryItem) => {
-          console.log('HistoricoPage: Item do histórico:', item);
-
-          let createdAt = new Date();
-          try {
-            if (item.createdAt) {
-              createdAt = item.createdAt.toDate();
-            } else if (item.readAt) {
-              createdAt = item.readAt.toDate();
-            }
-          } catch (error) {
-            console.error('HistoricoPage: Erro ao converter data:', error);
+          if (!userDoc.exists()) {
+            throw new Error('Usuário não encontrado');
           }
 
-          return {
-            id: `${item.newsId}_${createdAt.getTime()}`, // Chave única combinando newsId e timestamp
-            newsId: item.newsId,
-            userId: user.id,
-            createdAt,
-            newsSlug: item.newsSlug,
-            newsTitle: item.newsTitle,
-            type: 'readHistory',
-            status: 'active',
-          } as Omit<HistoryItem, 'news'>;
-        });
+          const userData = userDoc.data();
+          const readHistory = userData.readHistory || [];
 
-        console.log('HistoricoPage: Items processados:', {
-          total: historyItems.length,
-          items: historyItems,
-        });
+          // Aplica paginação no histórico
+          const start = (page - 1) * ITEMS_PER_PAGE;
+          const end = start + ITEMS_PER_PAGE;
+          const paginatedHistory = readHistory.slice(start, end);
 
-        // Busca os detalhes das notícias
-        const newsIds = historyItems.map(
-          (item: Omit<HistoryItem, 'news'>) => item.newsId
-        );
-        console.log('HistoricoPage: IDs das notícias para buscar:', newsIds);
+          // Verifica se há mais itens
+          setHasMore(readHistory.length > end);
 
-        const newsMap = new Map();
-
-        // Busca cada notícia individualmente
-        const newsPromises = newsIds.map(async (newsId: string) => {
-          try {
-            const newsDoc = await getDoc(doc(db, 'news', newsId));
-            if (newsDoc.exists()) {
-              const newsData = newsDoc.data() as News;
-              newsData.id = newsDoc.id;
-              console.log('HistoricoPage: Notícia encontrada:', {
-                id: newsData.id,
-                title: newsData.title,
-              });
-              return newsData;
-            }
-            console.log('HistoricoPage: Notícia não existe:', newsId);
-            return null;
-          } catch (error) {
-            console.error('HistoricoPage: Erro ao buscar notícia:', {
-              newsId,
-              error,
-            });
-            return null;
+          if (paginatedHistory.length === 0) {
+            return [];
           }
-        });
 
-        const newsResults = await Promise.all(newsPromises);
-        newsResults.forEach((newsData: News | null) => {
-          if (newsData) {
-            newsMap.set(newsData.id, newsData);
-          }
-        });
-
-        const historyWithNews = historyItems
-          .map((item: Omit<HistoryItem, 'news'>) => {
-            const newsItem = newsMap.get(item.newsId);
-            if (!newsItem) {
-              console.log('HistoricoPage: Notícia não encontrada:', {
-                historyItem: item,
-                availableNews: Array.from(newsMap.keys()),
-              });
-              return null;
-            }
-            return {
-              ...item,
-              news: newsItem,
-            } as HistoryItem;
-          })
-          .filter(
-            (item: HistoryItem | null): item is HistoryItem => item !== null
-          )
-          .sort(
-            (a: HistoryItem, b: HistoryItem) =>
-              b.createdAt.getTime() - a.createdAt.getTime()
+          // Coleta IDs únicos das notícias
+          const newsIds = Array.from(
+            new Set(
+              paginatedHistory.map((item: UserHistoryItem) => item.newsId)
+            )
           );
 
-        console.log('HistoricoPage: Histórico final:', {
-          total: historyWithNews.length,
-          items: historyWithNews,
+          // Busca todas as notícias em uma única query
+          const newsQuery = query(
+            collection(db, 'news'),
+            where('id', 'in', newsIds)
+          );
+
+          const newsSnapshot = await getDocs(newsQuery);
+          const newsMap = new Map(
+            newsSnapshot.docs.map((doc) => [
+              doc.id,
+              { id: doc.id, ...doc.data() } as News,
+            ])
+          );
+
+          // Monta o histórico com as notícias
+          return paginatedHistory.map((item: UserHistoryItem) => ({
+            ...item,
+            news: newsMap.get(item.newsId) || null,
+          }));
+        };
+
+        // Usa cache para reduzir leituras
+        const historyData = await cacheService.get(cacheKey, fetchHistoryData, {
+          ttl: HISTORY_CACHE_TTL,
         });
 
         if (isMounted) {
-          setHistory(historyWithNews);
+          setHistory((prev) =>
+            page === 1 ? historyData : [...prev, ...historyData]
+          );
           setLoading(false);
         }
       } catch (error) {
-        console.error('HistoricoPage: Erro ao buscar histórico:', error);
+        console.error('Erro ao carregar histórico:', error);
         if (isMounted) {
-          setError('Erro ao carregar o histórico. Por favor, tente novamente.');
-          setHistory([]);
+          setError('Erro ao carregar histórico de leitura');
           setLoading(false);
         }
       }
@@ -216,88 +140,112 @@ export default function HistoricoPage() {
     return () => {
       isMounted = false;
     };
-  }, [user?.id, authLoading]);
+  }, [user?.id, authLoading, page]);
 
-  if (authLoading || loading) {
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      setPage((prev) => prev + 1);
+    }
+  };
+
+  if (authLoading) {
     return (
-      <div className="flex h-32 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-        <p className="text-center text-secondary-600 dark:text-secondary-400">
-          Faça login para ver seu histórico de leitura
-        </p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-lg border border-red-200 p-6 dark:border-red-800">
-        <p className="text-center text-red-600 dark:text-red-400">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <h1 className="mb-4 text-2xl font-bold">Acesso Restrito</h1>
+        <p className="mb-4">Faça login para ver seu histórico de leitura.</p>
+        <Link
+          href="/auth/login"
+          className="bg-primary hover:bg-primary/90 rounded px-4 py-2 text-white"
+        >
+          Fazer Login
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold">Histórico de Leitura</h1>
-        <p className="mt-2 text-secondary-600 dark:text-secondary-400">
-          Veja as notícias que você leu recentemente
-        </p>
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="mb-6 text-2xl font-bold">Histórico de Leitura</h1>
 
-      <div className="rounded-lg border border-secondary-200 p-6 dark:border-secondary-800">
-        {history.length > 0 ? (
-          <div className="space-y-6">
-            {history.map((item) => {
-              if (!item.news) return null;
-              return (
+      {error && (
+        <div className="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+          {error}
+        </div>
+      )}
+
+      {loading && history.length === 0 ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      ) : history.length === 0 ? (
+        <div className="py-8 text-center">
+          <p className="text-gray-500">Nenhuma notícia lida ainda.</p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {history.map(
+            (item) =>
+              item.news && (
                 <Link
-                  key={item.id}
+                  key={`${item.newsId}_${item.readAt.toDate().getTime()}`}
                   href={`/noticias/${item.news.slug}`}
-                  className="group block"
+                  className="block rounded-lg bg-white shadow transition-shadow hover:shadow-md"
                 >
-                  <div className="flex gap-4">
-                    <div className="relative h-20 w-32 flex-shrink-0 overflow-hidden rounded-lg">
-                      <Image
-                        src={item.news.imageUrl}
-                        alt={item.news.title}
-                        fill
-                        className="object-cover transition-transform group-hover:scale-105"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="font-medium group-hover:text-primary-600">
+                  <div className="flex items-start gap-4 p-4">
+                    {item.news.imageUrl && (
+                      <div className="flex-shrink-0">
+                        <Image
+                          src={item.news.imageUrl}
+                          alt={item.news.title}
+                          width={120}
+                          height={80}
+                          className="rounded object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-grow">
+                      <h2 className="mb-2 text-lg font-semibold">
                         {item.news.title}
-                      </h3>
-                      <p className="mt-1 line-clamp-2 text-sm text-secondary-600 dark:text-secondary-400">
+                      </h2>
+                      <p className="mb-2 text-sm text-gray-600">
                         {item.news.summary}
                       </p>
-                      <time
-                        dateTime={item.createdAt.toISOString()}
-                        className="mt-2 text-xs text-secondary-500 dark:text-secondary-500"
-                      >
-                        Lido em {formatDate(item.createdAt)}
-                      </time>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <span>{formatDate(item.readAt.toDate())}</span>
+                        <span className="mx-2">•</span>
+                        <span>{item.news.category}</span>
+                      </div>
                     </div>
                   </div>
                 </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-center text-secondary-600 dark:text-secondary-400">
-            Você ainda não leu nenhuma notícia
-          </p>
-        )}
-      </div>
+              )
+          )}
+
+          {hasMore && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={loadMore}
+                disabled={loading}
+                className="bg-primary hover:bg-primary/90 rounded px-6 py-2 text-white disabled:opacity-50"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Carregar Mais'
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

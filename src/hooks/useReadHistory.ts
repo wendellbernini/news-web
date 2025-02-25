@@ -12,6 +12,10 @@ import { useAuth } from './useAuth';
 import useStore from '@/store/useStore';
 import { cacheService } from '@/lib/cache';
 
+// Aumentado para reduzir número de escritas
+const READ_HISTORY_CACHE_TTL = 1800; // 30 minutos
+const READ_HISTORY_DEBOUNCE = 10000; // 10 segundos
+
 interface ReadHistoryItem {
   newsId: string;
   userId: string;
@@ -23,8 +27,8 @@ interface ReadHistoryItem {
   status: 'active';
 }
 
-const READ_HISTORY_CACHE_TTL = 600; // 10 minutos
-const READ_HISTORY_DEBOUNCE = 3000; // 3 segundos
+// Cache local para armazenar histórico pendente
+const pendingHistoryCache = new Map<string, ReadHistoryItem[]>();
 
 export function useReadHistory() {
   const { user } = useAuth();
@@ -33,50 +37,16 @@ export function useReadHistory() {
 
   const addToHistory = useCallback(
     async (newsId: string, newsSlug: string, newsTitle: string) => {
-      console.log('DEBUG - Iniciando addToHistory:', {
-        newsId,
-        newsSlug,
-        newsTitle,
-        userId: user?.id,
-      });
-
       if (!user?.id) {
         console.log('useReadHistory: Usuário não autenticado');
         return Promise.reject(new Error('Usuário não autenticado'));
       }
 
       try {
-        console.log('useReadHistory: Iniciando registro para usuário:', {
-          id: user.id,
-          newsId,
-          newsSlug,
-          newsTitle,
-        });
-
         const cacheKey = `read_history_${user.id}`;
-
-        // Verifica se já está no histórico usando cache
-        const cachedHistory = await cacheService.get<ReadHistoryItem[]>(
-          cacheKey,
-          async () => {
-            const userRef = doc(db, 'users', user.id);
-            const userDoc = await getDoc(userRef);
-            return userDoc.exists() ? userDoc.data().readHistory || [] : [];
-          },
-          { ttl: READ_HISTORY_CACHE_TTL }
-        );
-
-        const alreadyRead = cachedHistory.some(
-          (item) => item.newsId === newsId
-        );
-
-        if (alreadyRead) {
-          console.log('useReadHistory: Notícia já está no histórico');
-          return Promise.resolve(newsId);
-        }
-
-        // Cria o item do histórico com timestamp
         const now = Timestamp.now();
+
+        // Cria o item do histórico
         const historyItem: ReadHistoryItem = {
           newsId,
           userId: user.id,
@@ -88,44 +58,66 @@ export function useReadHistory() {
           status: 'active',
         };
 
-        console.log('DEBUG - Item a ser salvo:', historyItem);
+        // Adiciona ao cache pendente
+        const pendingItems = pendingHistoryCache.get(user.id) || [];
+        pendingItems.push(historyItem);
+        pendingHistoryCache.set(user.id, pendingItems);
 
-        // Debounce para atualizações no Firestore
-        clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(async () => {
-          try {
+        // Atualiza o cache imediatamente para feedback rápido
+        const cachedHistory = await cacheService.get<ReadHistoryItem[]>(
+          cacheKey,
+          async () => {
             const userRef = doc(db, 'users', user.id);
-            await updateDoc(userRef, {
-              readHistory: arrayUnion(historyItem),
-            });
-          } catch (error) {
-            if (
-              error instanceof Error &&
-              error.message.includes('No document to update')
-            ) {
-              const userRef = doc(db, 'users', user.id);
-              await setDoc(
-                userRef,
-                { readHistory: [historyItem] },
-                { merge: true }
-              );
-            } else {
-              throw error;
-            }
-          }
-        }, READ_HISTORY_DEBOUNCE);
+            const userDoc = await getDoc(userRef);
+            return userDoc.exists() ? userDoc.data().readHistory || [] : [];
+          },
+          { ttl: READ_HISTORY_CACHE_TTL }
+        );
 
-        // Atualiza o cache imediatamente
         const updatedHistory = [historyItem, ...cachedHistory];
         await cacheService.set(cacheKey, updatedHistory, {
           ttl: READ_HISTORY_CACHE_TTL,
           useMemoryOnly: true,
         });
 
-        console.log('useReadHistory: Histórico atualizado com sucesso');
+        // Debounce para atualizações no Firestore
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(async () => {
+          const pendingItems = pendingHistoryCache.get(user.id) || [];
+          if (pendingItems.length === 0) return;
+
+          try {
+            const userRef = doc(db, 'users', user.id);
+
+            // Tenta atualizar em lote
+            try {
+              await updateDoc(userRef, {
+                readHistory: arrayUnion(...pendingItems),
+              });
+            } catch (error) {
+              if (
+                error instanceof Error &&
+                error.message.includes('No document to update')
+              ) {
+                await setDoc(
+                  userRef,
+                  { readHistory: pendingItems },
+                  { merge: true }
+                );
+              } else {
+                throw error;
+              }
+            }
+
+            // Limpa o cache pendente após sucesso
+            pendingHistoryCache.set(user.id, []);
+          } catch (error) {
+            console.error('useReadHistory: Erro ao salvar em lote:', error);
+          }
+        }, READ_HISTORY_DEBOUNCE);
 
         // Atualiza o estado local
-        addToLocalHistory(newsId, 100);
+        addToLocalHistory(newsId);
 
         return Promise.resolve(newsId);
       } catch (error) {
