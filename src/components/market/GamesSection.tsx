@@ -96,11 +96,12 @@ const GamesSection = () => {
               </div>
               <div className="flex items-center gap-2">
                 <img
-                  src={game.time_mandante.escudo || '/placeholder-team.png'}
+                  src={game.time_mandante.escudo || '/placeholder-team.svg'}
                   alt={game.time_mandante.sigla}
                   className="h-6 w-6 object-contain"
                   onError={(e) => {
-                    e.currentTarget.src = '/placeholder-team.png';
+                    e.currentTarget.src = '/placeholder-team.svg';
+                    e.currentTarget.onerror = null;
                   }}
                 />
                 <span className="font-medium">{game.time_mandante.sigla}</span>
@@ -119,11 +120,12 @@ const GamesSection = () => {
                 )}
                 <span className="font-medium">{game.time_visitante.sigla}</span>
                 <img
-                  src={game.time_visitante.escudo || '/placeholder-team.png'}
+                  src={game.time_visitante.escudo || '/placeholder-team.svg'}
                   alt={game.time_visitante.sigla}
                   className="h-6 w-6 object-contain"
                   onError={(e) => {
-                    e.currentTarget.src = '/placeholder-team.png';
+                    e.currentTarget.src = '/placeholder-team.svg';
+                    e.currentTarget.onerror = null;
                   }}
                 />
               </div>
