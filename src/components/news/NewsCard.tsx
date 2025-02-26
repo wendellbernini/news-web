@@ -70,22 +70,26 @@ export function NewsCard({
 
   if (variant === 'compact') {
     return (
-      <Card className="group overflow-hidden">
+      <Card className="group overflow-hidden hover:shadow-md">
         <div className="flex gap-4">
           <Link
             href={`/noticias/${news.slug}`}
-            className="relative h-24 w-32 shrink-0 overflow-hidden"
+            className="relative h-32 w-48 shrink-0 overflow-hidden"
           >
             <Image
               src={news.imageUrl}
               alt={news.title}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="128px"
+              sizes="192px"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            <span className="absolute bottom-2 left-2 rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white">
+              {news.category}
+            </span>
           </Link>
-          <div className="flex flex-col justify-between py-2">
-            <div>
+          <div className="flex flex-1 flex-col justify-between py-2 pr-2">
+            <div className="space-y-2">
               <Link
                 href={`/noticias/${news.slug}`}
                 className="group-hover:text-primary-600"
@@ -94,36 +98,37 @@ export function NewsCard({
                   {news.title}
                 </CardTitle>
               </Link>
-              <CardDescription className="mt-1 flex items-center gap-2 text-xs">
-                <time dateTime={ensureDate(news.createdAt).toISOString()}>
-                  {formatDate(ensureDate(news.createdAt))}
-                </time>
-                <span>•</span>
-                <span>{news.category}</span>
+              <CardDescription className="line-clamp-2 text-sm">
+                {truncateText(news.summary, 100)}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1 px-2"
-                onClick={handleSave}
+            <div className="mt-2 flex items-center justify-between">
+              <time
+                className="text-xs text-secondary-600"
+                dateTime={ensureDate(news.createdAt).toISOString()}
               >
-                <Bookmark
-                  className={`h-4 w-4 ${isNewsSaved ? 'fill-current' : ''}`}
-                />
-                <span className="text-xs">
-                  {isNewsSaved ? 'Salvo' : 'Salvar'}
-                </span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2"
-                onClick={() => onShare?.(news)}
-              >
-                <Share2 className="h-4 w-4" />
-              </Button>
+                {formatDate(ensureDate(news.createdAt))}
+              </time>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={handleSave}
+                >
+                  <Bookmark
+                    className={`h-4 w-4 ${isNewsSaved ? 'fill-current' : ''}`}
+                  />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => onShare?.(news)}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
