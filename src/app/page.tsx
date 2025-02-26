@@ -21,7 +21,7 @@ export default function Home() {
           <FeaturedNews />
         </Suspense>
 
-        <div className="mt-12">
+        <div className="mt-12 border-t border-gray-200 pt-12">
           <div className="mb-8 space-y-4 md:flex md:items-center md:justify-between md:space-y-0">
             <h2 className="text-3xl font-bold">Últimas Notícias</h2>
             <div className="w-full md:w-auto">
@@ -40,19 +40,25 @@ export default function Home() {
           </Suspense>
         </div>
 
-        <NewsletterSection />
+        <div className="mt-12">
+          <NewsletterSection />
+        </div>
 
-        <CategoryNewsSection
-          title="Política"
-          category="Política"
-          accentColor="bg-orange-600 text-orange-600"
-        />
+        <div className="mt-12 border-t border-gray-200 pt-12">
+          <CategoryNewsSection
+            title="Política"
+            category="Política"
+            accentColor="bg-orange-600 text-orange-600"
+          />
+        </div>
 
-        <CategoryNewsSection
-          title="Economia"
-          category="Economia"
-          accentColor="bg-rose-600 text-rose-600"
-        />
+        <div className="mt-12 border-t border-gray-200 pt-12">
+          <CategoryNewsSection
+            title="Economia"
+            category="Economia"
+            accentColor="bg-rose-600 text-rose-600"
+          />
+        </div>
       </div>
     </RootLayout>
   );

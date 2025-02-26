@@ -120,22 +120,6 @@ export function FeaturedNews() {
             </div>
           </div>
         </Link>
-
-        {/* Controles de navegação */}
-        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-          {featuredNews.map((_, index) => (
-            <button
-              key={index}
-              className={`h-1.5 rounded-full transition-all ${
-                index === currentIndex
-                  ? 'w-6 bg-primary-600'
-                  : 'w-1.5 bg-secondary-300 hover:bg-secondary-400'
-              }`}
-              onClick={() => setCurrentIndex(index)}
-              aria-label={`Ir para slide ${index + 1}`}
-            />
-          ))}
-        </div>
       </div>
 
       {/* Área das notícias mais lidas - ocupa 2/5 do espaço */}
