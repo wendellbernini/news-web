@@ -6,6 +6,7 @@ import { CategoryFilter } from '@/components/news/CategoryFilter';
 import { Loader2 } from 'lucide-react';
 import { NewsletterSection } from '@/components/newsletter/NewsletterSection';
 import { CategoryNewsSection } from '@/components/news/CategoryNewsSection';
+import MarketAndGamesContainer from '@/components/market/MarketAndGamesContainer';
 
 export default function Home() {
   return (
@@ -58,6 +59,10 @@ export default function Home() {
             category="Economia"
             accentColor="bg-rose-600 text-rose-600"
           />
+        </div>
+
+        <div className="mt-12 border-t border-gray-200 pt-12">
+          <MarketAndGamesContainer />
         </div>
       </div>
     </RootLayout>
