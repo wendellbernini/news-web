@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { NewsletterSection } from '@/components/newsletter/NewsletterSection';
 import { CategoryNewsSection } from '@/components/news/CategoryNewsSection';
 import MarketAndGamesContainer from '@/components/market/MarketAndGamesContainer';
+import { NewsCategoryGrid } from '@/components/news/NewsCategoryGrid';
 
 export default function Home() {
   return (
@@ -64,6 +65,10 @@ export default function Home() {
         <div className="mt-12 border-t border-gray-200 pt-12">
           <MarketAndGamesContainer />
         </div>
+      </div>
+
+      <div className="container mt-12">
+        <NewsCategoryGrid />
       </div>
     </RootLayout>
   );
