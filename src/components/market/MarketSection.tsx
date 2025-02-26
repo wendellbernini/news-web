@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Area, AreaChart, ResponsiveContainer, YAxis } from 'recharts';
+import {
+  Area,
+  AreaChart,
+  ResponsiveContainer,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from 'recharts';
 
 // Tipos para os dados do mercado
 interface MarketData {
@@ -22,6 +29,21 @@ const formatNumber = (num: number) => {
   }).format(num);
 };
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.[0]) return null;
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+      <p className="font-medium">{formatNumber(payload[0].value)}</p>
+      <p className="text-xs text-gray-500">
+        {new Date(payload[0].payload.time * 1000).toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </p>
+    </div>
+  );
+};
+
 const MarketSection = () => {
   const [marketData, setMarketData] = useState<MarketData[]>([]);
   const [currentValue, setCurrentValue] = useState<number>(0);
@@ -34,6 +56,7 @@ const MarketSection = () => {
         const response = await fetch('/api/market');
         if (!response.ok) throw new Error('Erro ao buscar dados');
         const data: MarketResponse = await response.json();
+        console.log('Dados do mercado:', data); // Debug temporário
         setMarketData(data.data);
         setCurrentValue(data.currentValue);
         setVariation(data.variation);
@@ -57,12 +80,6 @@ const MarketSection = () => {
   const variationColor = isPositive ? 'text-green-600' : 'text-red-600';
   const variationSign = isPositive ? '+' : '';
 
-  // Calcula o domínio do eixo Y para mostrar melhor as variações
-  const values = marketData.map((d) => d.close);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const padding = (max - min) * 0.1;
-
   return (
     <div className="rounded-lg bg-gray-50 p-8">
       <div className="mb-4 flex items-baseline gap-2">
@@ -74,33 +91,47 @@ const MarketSection = () => {
         </span>
       </div>
 
-      <div className="-mx-2 h-[100px]">
+      <div className="-mx-2 h-[160px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={marketData}>
+          <AreaChart
+            data={marketData}
+            margin={{ top: 10, right: 10, bottom: 0, left: 0 }}
+          >
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
                   stopColor={isPositive ? '#22c55e' : '#dc2626'}
-                  stopOpacity={0.15}
+                  stopOpacity={0.2}
                 />
                 <stop
                   offset="95%"
                   stopColor={isPositive ? '#22c55e' : '#dc2626'}
-                  stopOpacity={0}
+                  stopOpacity={0.05}
                 />
               </linearGradient>
             </defs>
-            <YAxis domain={[min - padding, max + padding]} hide type="number" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#E5E7EB"
+              vertical={false}
+            />
+            <YAxis
+              domain={['auto', 'auto']}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: '#6B7280' }}
+              width={45}
+            />
+            <Tooltip content={<CustomTooltip />} />
             <Area
-              type="natural"
+              type="monotone"
               dataKey="close"
               stroke={isPositive ? '#22c55e' : '#dc2626'}
-              strokeWidth={1.5}
+              strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorValue)"
-              isAnimationActive={false}
-              dot={false}
+              animationDuration={500}
             />
           </AreaChart>
         </ResponsiveContainer>

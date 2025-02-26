@@ -235,7 +235,29 @@ export const useNotifications = () => {
       const batch = writeBatch(db);
       const notificationsRef = collection(db, 'user_notifications');
 
-      usersSnapshot.docs.forEach((userDoc) => {
+      // Para cada usuário, precisamos verificar suas notificações existentes
+      for (const userDoc of usersSnapshot.docs) {
+        // Busca as notificações existentes do usuário, ordenadas por data
+        const userNotificationsQuery = query(
+          collection(db, 'user_notifications'),
+          where('userId', '==', userDoc.id),
+          where('read', '==', false),
+          orderBy('createdAt', 'asc')
+        );
+        const userNotificationsSnapshot = await getDocs(userNotificationsQuery);
+
+        // Se já tem 10 ou mais notificações, remove as mais antigas
+        if (userNotificationsSnapshot.size >= 10) {
+          const notificationsToDelete = userNotificationsSnapshot.docs.slice(
+            0,
+            userNotificationsSnapshot.size - 9
+          );
+          notificationsToDelete.forEach((doc) => {
+            batch.delete(doc.ref);
+          });
+        }
+
+        // Adiciona a nova notificação
         const notificationRef = doc(notificationsRef);
         batch.set(notificationRef, {
           userId: userDoc.id,
@@ -246,7 +268,7 @@ export const useNotifications = () => {
           read: false,
           link,
         });
-      });
+      }
 
       await batch.commit();
     } catch (error) {

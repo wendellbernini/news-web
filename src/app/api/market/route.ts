@@ -9,6 +9,7 @@ export async function GET() {
         headers: {
           'User-Agent': 'Mozilla/5.0',
         },
+        cache: 'no-store',
       }
     );
 
@@ -17,16 +18,30 @@ export async function GET() {
     }
 
     const data = await response.json();
+    console.log('Resposta da API Yahoo:', data); // Debug temporário
 
-    // Filtra apenas dados válidos (remove valores nulos/undefined)
+    // Validação rápida da estrutura dos dados
+    if (
+      !data?.chart?.result?.[0]?.timestamp ||
+      !data?.chart?.result?.[0]?.indicators?.quote?.[0]
+    ) {
+      throw new Error('Dados do mercado indisponíveis');
+    }
+
     const { timestamp, indicators } = data.chart.result[0];
     const quotes = indicators.quote[0];
+
+    // Filtra e processa os dados garantindo que não há valores nulos
     const validData = timestamp
       .map((time: number, index: number) => ({
         time,
-        close: quotes.close[index],
+        close: Number(quotes.close[index]?.toFixed(2)) || null,
       }))
-      .filter((item: any) => item.close !== null && item.close !== undefined);
+      .filter((item: any) => item.close !== null);
+
+    if (validData.length === 0) {
+      throw new Error('Sem dados válidos disponíveis');
+    }
 
     // Calcula variação
     const lastPrice = validData[validData.length - 1].close;
@@ -36,7 +51,7 @@ export async function GET() {
     return NextResponse.json({
       data: validData,
       currentValue: lastPrice,
-      variation,
+      variation: Number(variation.toFixed(2)),
     });
   } catch (error) {
     console.error('Erro ao buscar dados do mercado:', error);
