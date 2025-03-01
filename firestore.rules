@@ -2,48 +2,119 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Função auxiliar para verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
     // Função auxiliar para verificar se o usuário é admin
     function isAdmin() {
-      return request.auth != null &&
+      return isAuthenticated() &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Função para verificar se o usuário é o proprietário do documento
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Função para validar campos obrigatórios
+    function hasRequiredFields(requiredFields) {
+      return request.resource.data.keys().hasAll(requiredFields);
+    }
+
+    // Função para limitar a taxa de escrita (rate limiting)
+    function isNotRateLimited() {
+      return request.time > resource.data.lastWrite + duration.value(60, 's') || 
+             !('lastWrite' in resource.data);
     }
 
     // Regras para a coleção api_keys
     match /api_keys/{keyId} {
       allow read: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin();
+      allow create: if isAdmin() && hasRequiredFields(['key', 'createdAt', 'permissions']);
+      allow update: if isAdmin() && isNotRateLimited();
       allow delete: if isAdmin();
     }
 
     // Regras para a coleção users
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      // Usuários podem ler seus próprios dados ou admins podem ler qualquer usuário
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Usuários podem criar seus próprios perfis com validação de campos
+      allow create: if isOwner(userId) && 
+                     hasRequiredFields(['email', 'displayName', 'createdAt']) &&
+                     request.resource.data.role == 'user'; // Garante que novos usuários não possam se registrar como admin
+      
+      // Usuários podem atualizar seus próprios dados, mas não podem mudar seu papel
+      allow update: if (isOwner(userId) && 
+                      (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))) ||
+                     isAdmin();
+      
+      // Apenas admins podem excluir usuários
+      allow delete: if isAdmin();
     }
 
     // Regras para notificações de usuários
     match /user_notifications/{notificationId} {
       // Usuários podem ler suas próprias notificações
-      allow read: if request.auth != null &&
-        resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() &&
+                   resource.data.userId == request.auth.uid;
 
       // Usuários podem marcar suas notificações como lidas
-      allow update: if request.auth != null &&
-        resource.data.userId == request.auth.uid &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow update: if isAuthenticated() &&
+                     resource.data.userId == request.auth.uid &&
+                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
 
-      // Apenas admins podem criar notificações
-      allow create: if isAdmin();
+      // Apenas admins podem criar notificações com validação de campos
+      allow create: if isAdmin() && 
+                     hasRequiredFields(['userId', 'message', 'createdAt', 'read']);
 
       // Apenas admins podem deletar notificações
       allow delete: if isAdmin();
     }
 
+    // Regras para notícias
+    match /news/{newsId} {
+      // Qualquer pessoa pode ler notícias publicadas
+      allow read: if resource.data.status == 'published' || isAdmin();
+      
+      // Apenas admins podem criar, atualizar ou excluir notícias
+      allow create: if isAdmin() && 
+                     hasRequiredFields(['title', 'content', 'author', 'createdAt', 'status']);
+      allow update: if isAdmin() && isNotRateLimited();
+      allow delete: if isAdmin();
+    }
+
+    // Regras para comentários
+    match /comments/{commentId} {
+      // Qualquer pessoa autenticada pode ler comentários
+      allow read: if isAuthenticated();
+      
+      // Usuários autenticados podem criar comentários com validação
+      allow create: if isAuthenticated() && 
+                     hasRequiredFields(['userId', 'newsId', 'content', 'createdAt']) &&
+                     request.resource.data.userId == request.auth.uid;
+      
+      // Usuários podem editar apenas seus próprios comentários
+      allow update: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid &&
+                     request.resource.data.userId == request.auth.uid &&
+                     isNotRateLimited();
+      
+      // Usuários podem excluir seus próprios comentários ou admins podem excluir qualquer comentário
+      allow delete: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
     // Regras para outras coleções...
     match /{document=**} {
-      allow read: if request.auth != null;
+      // Leitura pública para documentos não sensíveis
+      allow read: if true;
+      
+      // Apenas admins podem escrever em outras coleções
       allow write: if isAdmin();
     }
   }

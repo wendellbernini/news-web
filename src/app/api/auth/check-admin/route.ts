@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { adminAuth, adminDb } from '@/lib/firebase/admin';
+import { withDefaultMiddleware } from '../../middleware';
 
-export async function GET() {
+async function handler(_request: NextRequest) {
   try {
     console.log('Check-admin: Iniciando verificação');
     const cookieStore = await cookies();
@@ -75,3 +76,6 @@ export async function GET() {
     });
   }
 }
+
+// Aplicar middleware de rate limiting e segurança
+export const GET = withDefaultMiddleware(handler);
