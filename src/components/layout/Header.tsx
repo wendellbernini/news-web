@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { Search, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import useStore from '@/store/useStore';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/user/UserMenu';
