@@ -57,23 +57,25 @@ export function CookieConsent() {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[448px] overflow-hidden rounded-xl bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:bg-secondary-900/80">
-      <h3 className="mb-2 text-lg font-semibold">
-        Valorizamos sua privacidade
-      </h3>
-      <p className="mb-4 text-sm text-secondary-600 dark:text-secondary-400">
-        Utilizamos cookies para melhorar sua experiência de navegação,
-        personalizar conteúdo e analisar nosso tráfego. Ao clicar em "Aceitar",
-        você concorda com nosso uso de cookies.
-      </p>
+    <div className="fixed inset-x-0 bottom-0 z-50 mx-auto max-w-md px-4 pb-4 sm:bottom-4 sm:left-auto sm:right-4 sm:mx-0 sm:w-[448px] sm:px-0">
+      <div className="overflow-hidden rounded-lg bg-white/90 p-4 shadow-lg backdrop-blur-sm dark:bg-secondary-900/90 sm:rounded-xl sm:p-6">
+        <h3 className="mb-2 text-base font-semibold sm:text-lg">
+          Valorizamos sua privacidade
+        </h3>
+        <p className="mb-3 text-xs text-secondary-600 dark:text-secondary-400 sm:mb-4 sm:text-sm">
+          Utilizamos cookies para melhorar sua experiência de navegação,
+          personalizar conteúdo e analisar nosso tráfego. Ao clicar em
+          "Aceitar", você concorda com nosso uso de cookies.
+        </p>
 
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" size="sm" onClick={handleRejectAll}>
-          Rejeitar
-        </Button>
-        <Button size="sm" onClick={handleAcceptAll}>
-          Aceitar
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={handleRejectAll}>
+            Rejeitar
+          </Button>
+          <Button size="sm" onClick={handleAcceptAll}>
+            Aceitar
+          </Button>
+        </div>
       </div>
     </div>
   );
