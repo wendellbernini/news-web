@@ -30,8 +30,6 @@ export function NewsDetail({ slug }: NewsDetailProps) {
   const [error, setError] = useState<string | null>(null);
   const [historyRegistered, setHistoryRegistered] = useState(false);
   const newsId = news?.id;
-
-  // Chamando o hook sem armazenar o retorno, já que o efeito colateral é o que importa
   useNewsViews(newsId || '');
 
   useEffect(() => {

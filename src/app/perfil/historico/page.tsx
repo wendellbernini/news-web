@@ -102,6 +102,26 @@ export default function HistoricoPage() {
           );
           console.log('IDs únicos de notícias:', newsIds);
 
+          // Filtra o histórico para manter apenas a entrada mais recente de cada notícia
+          const uniqueHistory: UserHistoryItem[] = [];
+          const processedNewsIds = new Set<string>();
+
+          // Ordena por data de leitura (mais recente primeiro)
+          const sortedHistory = [...paginatedHistory].sort(
+            (a, b) => b.readAt.toDate().getTime() - a.readAt.toDate().getTime()
+          );
+
+          // Mantém apenas a primeira ocorrência (mais recente) de cada notícia
+          for (const item of sortedHistory) {
+            if (!processedNewsIds.has(item.newsId)) {
+              uniqueHistory.push(item);
+              processedNewsIds.add(item.newsId);
+            }
+          }
+
+          // Reordena conforme a paginação original se necessário
+          const filteredHistory = uniqueHistory.slice(0, ITEMS_PER_PAGE);
+
           // Busca todas as notícias em uma única query
           const newsPromises = newsIds.map((newsId: string) =>
             getDoc(doc(db as Firestore, 'news', newsId))
@@ -119,7 +139,7 @@ export default function HistoricoPage() {
           );
 
           // Monta o histórico com as notícias
-          const result = paginatedHistory.map((item: UserHistoryItem) => {
+          const result = filteredHistory.map((item: UserHistoryItem) => {
             const news = newsMap.get(item.newsId);
             if (!news) {
               console.warn('Notícia não encontrada:', item.newsId);
@@ -140,9 +160,32 @@ export default function HistoricoPage() {
         });
 
         if (isMounted) {
-          setHistory((prev) =>
-            page === 1 ? historyData : [...prev, ...historyData]
-          );
+          // Garante que não há duplicatas no histórico antes de atualizar o estado
+          setHistory((prevHistory) => {
+            const mergedHistory =
+              page === 1 ? historyData : [...prevHistory, ...historyData];
+
+            // Cria um Map para manter apenas a entrada mais recente de cada notícia
+            const historyMap = new Map<string, HistoryItem>();
+
+            // Para cada item, mantém apenas o mais recente por ID de notícia
+            mergedHistory.forEach((item) => {
+              const existingItem = historyMap.get(item.newsId);
+
+              if (
+                !existingItem ||
+                (existingItem &&
+                  item.readAt.toDate().getTime() >
+                    existingItem.readAt.toDate().getTime())
+              ) {
+                historyMap.set(item.newsId, item);
+              }
+            });
+
+            // Converte o Map de volta para array
+            return Array.from(historyMap.values());
+          });
+
           setLoading(false);
         }
       } catch (error) {
@@ -211,10 +254,10 @@ export default function HistoricoPage() {
       ) : (
         <div className="flex flex-col space-y-6">
           {history.map(
-            (item) =>
+            (item, index) =>
               item.news && (
                 <Link
-                  key={`${item.newsId}_${item.readAt.toDate().getTime()}`}
+                  key={`history-item-${item.newsId}-${index}`}
                   href={`/noticias/${item.news.slug}`}
                   className="block overflow-hidden rounded-lg bg-white shadow transition-all hover:shadow-lg"
                 >

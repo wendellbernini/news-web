@@ -46,6 +46,35 @@ export function useReadHistory() {
         const cacheKey = `read_history_${user.id}`;
         const now = Timestamp.now();
 
+        // Busca o histórico atual do cache ou do Firestore
+        const cachedHistory = await cacheService.get<ReadHistoryItem[]>(
+          cacheKey,
+          async () => {
+            const userRef = doc(db, 'users', user.id);
+            const userDoc = await getDoc(userRef);
+            return userDoc.exists() ? userDoc.data().readHistory || [] : [];
+          },
+          { ttl: READ_HISTORY_CACHE_TTL }
+        );
+
+        // Verifica se a notícia já existe no histórico
+        const alreadyExists = cachedHistory.some(
+          (item) => item.newsId === newsId
+        );
+
+        // Se a notícia já existe no histórico, não adiciona novamente
+        if (alreadyExists) {
+          console.log('useReadHistory: Notícia já existe no histórico', newsId);
+          // Ainda atualiza o estado local para feedback imediato
+          addToLocalHistory(newsId);
+          return Promise.resolve(newsId);
+        }
+
+        console.log(
+          'useReadHistory: Adicionando nova notícia ao histórico',
+          newsId
+        );
+
         // Cria o item do histórico
         const historyItem: ReadHistoryItem = {
           newsId,
@@ -64,16 +93,6 @@ export function useReadHistory() {
         pendingHistoryCache.set(user.id, pendingItems);
 
         // Atualiza o cache imediatamente para feedback rápido
-        const cachedHistory = await cacheService.get<ReadHistoryItem[]>(
-          cacheKey,
-          async () => {
-            const userRef = doc(db, 'users', user.id);
-            const userDoc = await getDoc(userRef);
-            return userDoc.exists() ? userDoc.data().readHistory || [] : [];
-          },
-          { ttl: READ_HISTORY_CACHE_TTL }
-        );
-
         const updatedHistory = [historyItem, ...cachedHistory];
         await cacheService.set(cacheKey, updatedHistory, {
           ttl: READ_HISTORY_CACHE_TTL,
