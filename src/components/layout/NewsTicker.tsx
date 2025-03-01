@@ -21,6 +21,8 @@ export function NewsTicker() {
   const [weatherRetryCount, setWeatherRetryCount] = useState(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const weatherTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const weatherIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const weatherRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Reseta o índice quando as notícias mudam
   useEffect(() => {
@@ -74,7 +76,20 @@ export function NewsTicker() {
         throw new Error(`Erro ao buscar dados do clima: ${response.status}`);
       }
 
-      const data = await response.json();
+      // Verificar se o corpo da resposta está vazio
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        throw new Error('Resposta vazia da API');
+      }
+
+      // Tentar fazer o parse do JSON com tratamento de erro
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Erro ao fazer parse do JSON:', parseError);
+        throw new Error('Resposta JSON inválida');
+      }
 
       if (!data || (!data.temperature && !data.temp)) {
         throw new Error('Dados do clima inválidos');
@@ -121,20 +136,6 @@ export function NewsTicker() {
     return () => clearInterval(interval);
   }, []);
 
-  // Busca e atualiza a temperatura
-  useEffect(() => {
-    fetchWeather();
-
-    // Atualizar a cada 5 minutos (300000ms), mas apenas se não estiver em estado de erro
-    const interval = setInterval(() => {
-      if (!weatherError) {
-        fetchWeather();
-      }
-    }, 300000);
-
-    return () => clearInterval(interval);
-  }, [weatherError, fetchWeather]);
-
   // Alterna entre as notícias a cada 5 segundos
   useEffect(() => {
     if (!news?.length) return;
@@ -146,45 +147,63 @@ export function NewsTicker() {
     return () => clearInterval(interval);
   }, [news]);
 
-  // Efeito para buscar dados do clima e configurar retry automático
+  // Efeito unificado para buscar dados do clima e configurar retry automático
   useEffect(() => {
-    // Buscar dados iniciais
-    fetchWeather();
-
-    // Configurar intervalo para atualização a cada 5 minutos
-    const intervalId = setInterval(fetchWeather, 5 * 60 * 1000);
-
-    // Configurar retry em caso de erro (com backoff exponencial)
-    let retryTimeoutId: NodeJS.Timeout | null = null;
-
-    if (weatherError) {
-      const retryDelay = Math.min(
-        30000,
-        5000 * Math.pow(2, weatherRetryCount - 1)
-      );
-      console.log(`Tentando novamente em ${retryDelay / 1000} segundos`);
-
-      retryTimeoutId = setTimeout(() => {
-        fetchWeather();
-      }, retryDelay);
-    }
-
-    // Cleanup
-    return () => {
-      clearInterval(intervalId);
-
-      if (retryTimeoutId) {
-        clearTimeout(retryTimeoutId);
-      }
-
+    // Função para limpar todos os timers e controllers
+    const cleanupAll = () => {
       if (weatherTimeoutRef.current) {
         clearTimeout(weatherTimeoutRef.current);
+        weatherTimeoutRef.current = null;
+      }
+
+      if (weatherIntervalRef.current) {
+        clearInterval(weatherIntervalRef.current);
+        weatherIntervalRef.current = null;
+      }
+
+      if (weatherRetryTimeoutRef.current) {
+        clearTimeout(weatherRetryTimeoutRef.current);
+        weatherRetryTimeoutRef.current = null;
       }
 
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+        abortControllerRef.current = null;
       }
     };
+
+    // Limpar tudo antes de configurar novos timers
+    cleanupAll();
+
+    // Buscar dados iniciais
+    fetchWeather();
+
+    // Configurar intervalo para atualização a cada 30 minutos (metade do TTL do cache)
+    // Isso garante que sempre teremos dados atualizados, mas sem sobrecarregar a API
+    weatherIntervalRef.current = setInterval(
+      () => {
+        if (!weatherError) {
+          fetchWeather();
+        }
+      },
+      30 * 60 * 1000 // 30 minutos (aumentado de 5 minutos)
+    );
+
+    // Configurar retry em caso de erro (com backoff exponencial)
+    if (weatherError) {
+      const retryDelay = Math.min(
+        30000, // máximo de 30 segundos
+        5000 * Math.pow(2, weatherRetryCount - 1)
+      );
+      console.log(`Tentando novamente em ${retryDelay / 1000} segundos`);
+
+      weatherRetryTimeoutRef.current = setTimeout(() => {
+        fetchWeather();
+      }, retryDelay);
+    }
+
+    // Cleanup ao desmontar o componente
+    return cleanupAll;
   }, [fetchWeather, weatherError, weatherRetryCount]);
 
   // Não renderiza nada se não houver notícias ou se estiver carregando

@@ -46,8 +46,7 @@ const GamesSection = () => {
     };
 
     fetchGames();
-    // Atualiza a cada 5 minutos
-    const interval = setInterval(fetchGames, 5 * 60 * 1000);
+    const interval = setInterval(fetchGames, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 

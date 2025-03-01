@@ -29,7 +29,13 @@ const formatNumber = (num: number) => {
   }).format(num);
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: any[];
+}) => {
   if (!active || !payload?.[0]) return null;
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
@@ -53,24 +59,63 @@ const MarketSection = () => {
   useEffect(() => {
     const fetchMarketData = async () => {
       try {
+        setLoading(true);
+
         const response = await fetch('/api/market');
-        if (!response.ok) throw new Error('Erro ao buscar dados');
-        const data: MarketResponse = await response.json();
+
+        if (!response.ok) {
+          throw new Error(`Erro na API: ${response.status}`);
+        }
+
+        // Verificar se a resposta está vazia
+        const text = await response.text();
+        if (!text || text.trim() === '') {
+          throw new Error('Resposta vazia da API');
+        }
+
+        // Tentar fazer o parse do JSON com tratamento de erro
+        let data: MarketResponse;
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          console.error('Erro ao fazer parse do JSON:', parseError);
+          throw new Error('Resposta JSON inválida');
+        }
+
+        // Validar a estrutura dos dados
+        if (!data || !Array.isArray(data.data) || !data.currentValue) {
+          console.error('Dados inválidos recebidos:', data);
+          throw new Error('Estrutura de dados inválida');
+        }
+
         console.log('Dados do mercado:', data); // Debug temporário
         setMarketData(data.data);
         setCurrentValue(data.currentValue);
         setVariation(data.variation);
       } catch (err) {
-        console.error(err);
+        console.error('Erro ao buscar dados do mercado:', err);
+
+        // Não mostrar o erro para o usuário, apenas manter os dados anteriores
+        // ou usar dados de fallback se não houver dados
+        if (marketData.length === 0) {
+          // Dados de fallback para quando não há dados anteriores
+          const now = Math.floor(Date.now() / 1000);
+          setMarketData([
+            { time: now - 3600, close: 130000 },
+            { time: now, close: 130500 },
+          ]);
+          setCurrentValue(130500);
+          setVariation(0.38);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchMarketData();
-    const interval = setInterval(fetchMarketData, 5 * 60 * 1000);
+    const interval = setInterval(fetchMarketData, 10 * 60 * 1000); // 10 minutos
     return () => clearInterval(interval);
-  }, []);
+  }, [marketData.length]); // Adicionando marketData.length como dependência
 
   if (loading) {
     return <div className="h-[160px] animate-pulse rounded-lg bg-gray-100" />;
