@@ -18,7 +18,19 @@
     "cleanup-images:force": "ts-node src/scripts/cleanupOrphanedImages.ts --force",
     "schedule-cleanup": "ts-node src/scripts/scheduleCleanup.ts",
     "build:scripts": "tsc --project tsconfig.scripts.json",
-    "postbuild": "npm run build:scripts"
+    "postbuild": "npm run build:scripts",
+    "load-test": "./scripts/load-testing/run-load-tests.sh",
+    "load-test:basic": "k6 run scripts/load-testing/basic-load-test.js",
+    "load-test:modified": "k6 run scripts/load-testing/basic-load-test-modified.js",
+    "load-test:advanced": "k6 run scripts/load-testing/advanced-load-test.js",
+    "load-test:api": "k6 run scripts/load-testing/api-load-test.js",
+    "monitor-resources": "./scripts/load-testing/monitor-resources.sh",
+    "analyze-results": "node scripts/load-testing/analyze-results.js",
+    "compare-results": "node scripts/load-testing/compare-results.js",
+    "compare-results:interactive": "./scripts/load-testing/example-compare.sh",
+    "setup-load-test": "sudo ./scripts/load-testing/setup.sh",
+    "generate-report": "node scripts/load-testing/generate-report.js",
+    "analyze-all": "./scripts/load-testing/analyze-all.sh"
   },
   "dependencies": {
     "@firebase/auth": "^1.5.1",

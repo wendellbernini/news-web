@@ -48,3 +48,12 @@ logs
 # Sistema operacional
 .DS_Store
 Thumbs.db
+
+# Resultados de testes de carga
+/logs/load-tests/
+*.json
+/scripts/load-testing/*.html
+/scripts/load-testing/results/
+
+# Histórico de conversas do Composer
+/.specstory/
