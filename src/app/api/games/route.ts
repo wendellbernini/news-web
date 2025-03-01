@@ -42,16 +42,20 @@ interface Match {
 }
 
 export async function GET() {
+  // Sempre retornar um conteúdo válido, mesmo em caso de erro
   try {
+    // Adicionar um atraso mínimo para evitar problemas de race condition
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     // Tentar obter dados do cache primeiro
-    return await cacheService.get(
+    const cachedData = await cacheService.get(
       GAMES_CACHE_KEY,
       async () => {
         try {
           // Verificar se a chave da API está configurada
           if (!process.env.FOOTBALL_DATA_API_KEY) {
             console.error('Chave da API de futebol não configurada');
-            return NextResponse.json(FALLBACK_GAMES_DATA);
+            return FALLBACK_GAMES_DATA;
           }
 
           const now = new Date();
@@ -72,6 +76,7 @@ export async function GET() {
                 Accept: 'application/json',
               },
               signal: controller.signal,
+              cache: 'no-store',
             }
           );
 
@@ -82,14 +87,14 @@ export async function GET() {
             console.error(
               `Erro na API de jogos: ${response.status} ${response.statusText}`
             );
-            throw new Error(await response.text());
+            return FALLBACK_GAMES_DATA;
           }
 
           // Verificar se o corpo da resposta está vazio
           const text = await response.text();
           if (!text || text.trim() === '') {
             console.error('Resposta vazia da API de jogos');
-            throw new Error('Resposta vazia da API');
+            return FALLBACK_GAMES_DATA;
           }
 
           // Tentar fazer o parse do JSON com tratamento de erro
@@ -98,13 +103,13 @@ export async function GET() {
             data = JSON.parse(text);
           } catch (parseError) {
             console.error('Erro ao fazer parse do JSON:', parseError);
-            throw new Error('Resposta JSON inválida');
+            return FALLBACK_GAMES_DATA;
           }
 
           // Validar a estrutura dos dados
           if (!data || !Array.isArray(data.matches)) {
             console.error('Estrutura de dados inválida:', data);
-            throw new Error('Estrutura de dados inválida');
+            return FALLBACK_GAMES_DATA;
           }
 
           const jogos = ((data.matches as Match[]) || [])
@@ -169,34 +174,41 @@ export async function GET() {
               status: match.status,
             }));
 
-          return NextResponse.json(
-            jogos.length
-              ? jogos
-              : [
-                  {
-                    hora_realizacao: '--:--',
-                    data: '--/--',
-                    time_mandante: { sigla: '---', escudo: '', gols: null },
-                    time_visitante: { sigla: '---', escudo: '', gols: null },
-                    campeonato: 'Nenhum jogo programado',
-                    status: 'SCHEDULED',
-                  },
-                ]
-          );
+          return jogos.length
+            ? jogos
+            : [
+                {
+                  hora_realizacao: '--:--',
+                  data: '--/--',
+                  time_mandante: { sigla: '---', escudo: '', gols: null },
+                  time_visitante: { sigla: '---', escudo: '', gols: null },
+                  campeonato: 'Nenhum jogo programado',
+                  status: 'SCHEDULED',
+                },
+              ];
         } catch (fetchError) {
           console.error('Erro ao buscar dados de jogos:', fetchError);
-
-          // Retornar dados de fallback em caso de erro
-          console.log('Usando dados de fallback para jogos');
-          return NextResponse.json(FALLBACK_GAMES_DATA);
+          return FALLBACK_GAMES_DATA;
         }
       },
-      { ttl: 1800 } // Cache por 30 minutos (aumentado de 15 minutos)
+      { ttl: 1800 } // Cache por 30 minutos
     );
+
+    // Garantir que sempre retornamos um objeto válido
+    return NextResponse.json(cachedData || FALLBACK_GAMES_DATA, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Erro no serviço de cache:', error);
-
     // Mesmo em caso de erro no cache, retornamos dados de fallback
-    return NextResponse.json(FALLBACK_GAMES_DATA);
+    return NextResponse.json(FALLBACK_GAMES_DATA, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }

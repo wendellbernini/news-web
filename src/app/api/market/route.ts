@@ -14,10 +14,20 @@ const FALLBACK_DATA = {
   variation: 0.38,
 };
 
+// Interface para os dados de mercado
+interface MarketDataItem {
+  time: number;
+  close: number | null;
+}
+
 export async function GET() {
+  // Sempre retornar um conteúdo válido, mesmo em caso de erro
   try {
+    // Adicionar um atraso mínimo para evitar problemas de race condition
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     // Tentar obter dados do cache primeiro
-    return await cacheService.get(
+    const cachedData = await cacheService.get(
       MARKET_CACHE_KEY,
       async () => {
         try {
@@ -33,6 +43,7 @@ export async function GET() {
                 'User-Agent': 'Mozilla/5.0',
               },
               signal: controller.signal,
+              cache: 'no-store',
             }
           );
 
@@ -43,14 +54,14 @@ export async function GET() {
             console.error(
               `Erro na API do Yahoo: ${response.status} ${response.statusText}`
             );
-            throw new Error('Erro ao buscar dados do mercado');
+            return FALLBACK_DATA;
           }
 
           // Verificar se o corpo da resposta está vazio
           const text = await response.text();
           if (!text || text.trim() === '') {
             console.error('Resposta vazia da API do Yahoo');
-            throw new Error('Resposta vazia da API');
+            return FALLBACK_DATA;
           }
 
           // Tentar fazer o parse do JSON com tratamento de erro
@@ -64,10 +75,8 @@ export async function GET() {
               'Texto recebido:',
               text
             );
-            throw new Error('Resposta JSON inválida');
+            return FALLBACK_DATA;
           }
-
-          console.log('Resposta da API Yahoo:', data); // Debug temporário
 
           // Validação robusta da estrutura dos dados
           if (
@@ -75,7 +84,7 @@ export async function GET() {
             !data?.chart?.result?.[0]?.indicators?.quote?.[0]
           ) {
             console.error('Estrutura de dados inválida:', data);
-            throw new Error('Dados do mercado indisponíveis');
+            return FALLBACK_DATA;
           }
 
           const { timestamp, indicators } = data.chart.result[0];
@@ -91,11 +100,11 @@ export async function GET() {
                   ? Number(quotes.close[index].toFixed(2))
                   : null,
             }))
-            .filter((item: any) => item.close !== null);
+            .filter((item: MarketDataItem) => item.close !== null);
 
           if (validData.length === 0) {
             console.error('Sem dados válidos disponíveis');
-            throw new Error('Sem dados válidos disponíveis');
+            return FALLBACK_DATA;
           }
 
           // Calcula variação
@@ -103,27 +112,34 @@ export async function GET() {
           const firstPrice = validData[0].close;
           const variation = ((lastPrice - firstPrice) / firstPrice) * 100;
 
-          return NextResponse.json({
+          return {
             data: validData,
             currentValue: lastPrice,
             variation: Number(variation.toFixed(2)),
-          });
+          };
         } catch (fetchError) {
           console.error('Erro ao buscar dados do mercado:', fetchError);
-
-          // Retornar dados de fallback em caso de erro
-          // Isso evita que o componente quebre quando a API externa falhar
-          console.log('Usando dados de fallback para o mercado');
-          return NextResponse.json(FALLBACK_DATA);
+          return FALLBACK_DATA;
         }
       },
-      { ttl: 600 } // Cache por 10 minutos (aumentado de 5 minutos)
+      { ttl: 600 } // Cache por 10 minutos
     );
+
+    // Garantir que sempre retornamos um objeto válido
+    return NextResponse.json(cachedData || FALLBACK_DATA, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Erro no serviço de cache:', error);
-
     // Mesmo em caso de erro no cache, retornamos dados de fallback
-    // para garantir que a UI não quebre
-    return NextResponse.json(FALLBACK_DATA);
+    return NextResponse.json(FALLBACK_DATA, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }

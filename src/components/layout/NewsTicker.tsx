@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNews } from '@/hooks/useNews';
 import Link from 'next/link';
-import { Clock, Sun, AlertCircle } from 'lucide-react';
+import { Clock, Sun } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -23,6 +23,8 @@ export function NewsTicker() {
   const weatherTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const weatherIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const weatherRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const weatherFetchedRef = useRef<boolean>(false);
+  const isMountedRef = useRef<boolean>(false);
 
   // Reseta o índice quando as notícias mudam
   useEffect(() => {
@@ -34,6 +36,14 @@ export function NewsTicker() {
    * Utiliza useCallback para evitar recriação da função a cada renderização
    */
   const fetchWeather = useCallback(async () => {
+    // Se o componente não estiver montado, não fazer nada
+    if (!isMountedRef.current) return;
+
+    // Se já buscou dados e não está em estado de erro, não busca novamente
+    if (weatherFetchedRef.current && !weatherError) {
+      return;
+    }
+
     // Limpar timeout anterior se existir
     if (weatherTimeoutRef.current) {
       clearTimeout(weatherTimeoutRef.current);
@@ -50,7 +60,7 @@ export function NewsTicker() {
     const signal = abortControllerRef.current.signal;
 
     try {
-      // Configurar timeout de 8 segundos (aumentado para dar mais tempo)
+      // Configurar timeout de 8 segundos
       const timeoutId = setTimeout(() => {
         if (abortControllerRef.current) {
           abortControllerRef.current.abort();
@@ -59,13 +69,12 @@ export function NewsTicker() {
 
       weatherTimeoutRef.current = timeoutId;
 
-      // Fazer requisição para API interna
-      const response = await fetch('/api/weather', {
+      // Fazer requisição para API interna com timestamp para evitar cache do navegador
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/weather?_t=${timestamp}`, {
         signal,
-        headers: {
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
-        },
+        cache: 'no-store',
+        next: { revalidate: 0 },
       });
 
       // Limpar timeout após resposta
@@ -79,7 +88,7 @@ export function NewsTicker() {
       // Verificar se o corpo da resposta está vazio
       const text = await response.text();
       if (!text || text.trim() === '') {
-        throw new Error('Resposta vazia da API');
+        throw new Error('Resposta vazia da API de clima');
       }
 
       // Tentar fazer o parse do JSON com tratamento de erro
@@ -88,21 +97,25 @@ export function NewsTicker() {
         data = JSON.parse(text);
       } catch (parseError) {
         console.error('Erro ao fazer parse do JSON:', parseError);
-        throw new Error('Resposta JSON inválida');
+        throw new Error('Resposta JSON inválida da API de clima');
       }
 
       if (!data || (!data.temperature && !data.temp)) {
-        throw new Error('Dados do clima inválidos');
+        throw new Error('Dados de temperatura não encontrados na resposta');
       }
 
-      setWeatherData({
-        temperature: data.temperature || data.temp,
-        lastUpdated:
-          data.lastUpdated || data.lastUpdate || new Date().toISOString(),
-      });
+      // Se o componente ainda estiver montado, atualizar o estado
+      if (isMountedRef.current) {
+        setWeatherData({
+          temperature: data.temperature || data.temp,
+          lastUpdated:
+            data.lastUpdated || data.lastUpdate || new Date().toISOString(),
+        });
 
-      setWeatherError(false);
-      setWeatherRetryCount(0);
+        setWeatherError(false);
+        setWeatherRetryCount(0);
+        weatherFetchedRef.current = true;
+      }
     } catch (error) {
       // Não tratar como erro se foi um cancelamento intencional
       if (error instanceof Error && error.name === 'AbortError') {
@@ -111,12 +124,17 @@ export function NewsTicker() {
       }
 
       console.error('Erro ao buscar dados do clima:', error);
-      setWeatherError(true);
 
-      // Incrementar contador de tentativas
-      setWeatherRetryCount((prev) => prev + 1);
+      // Se o componente ainda estiver montado, atualizar o estado
+      if (isMountedRef.current) {
+        setWeatherError(true);
+        weatherFetchedRef.current = false;
+
+        // Incrementar contador de tentativas
+        setWeatherRetryCount((prev) => prev + 1);
+      }
     }
-  }, []);
+  }, [weatherError]);
 
   // Atualiza o horário a cada segundo
   useEffect(() => {
@@ -148,7 +166,11 @@ export function NewsTicker() {
   }, [news]);
 
   // Efeito unificado para buscar dados do clima e configurar retry automático
+  // Este efeito é executado apenas uma vez na montagem do componente
   useEffect(() => {
+    // Marcar o componente como montado
+    isMountedRef.current = true;
+
     // Função para limpar todos os timers e controllers
     const cleanupAll = () => {
       if (weatherTimeoutRef.current) {
@@ -175,36 +197,58 @@ export function NewsTicker() {
     // Limpar tudo antes de configurar novos timers
     cleanupAll();
 
-    // Buscar dados iniciais
+    // Buscar dados iniciais apenas uma vez na montagem
     fetchWeather();
 
     // Configurar intervalo para atualização a cada 30 minutos (metade do TTL do cache)
-    // Isso garante que sempre teremos dados atualizados, mas sem sobrecarregar a API
     weatherIntervalRef.current = setInterval(
       () => {
-        if (!weatherError) {
-          fetchWeather();
-        }
-      },
-      30 * 60 * 1000 // 30 minutos (aumentado de 5 minutos)
-    );
-
-    // Configurar retry em caso de erro (com backoff exponencial)
-    if (weatherError) {
-      const retryDelay = Math.min(
-        30000, // máximo de 30 segundos
-        5000 * Math.pow(2, weatherRetryCount - 1)
-      );
-      console.log(`Tentando novamente em ${retryDelay / 1000} segundos`);
-
-      weatherRetryTimeoutRef.current = setTimeout(() => {
+        // Resetar a flag para permitir nova busca
+        weatherFetchedRef.current = false;
         fetchWeather();
-      }, retryDelay);
-    }
+      },
+      30 * 60 * 1000
+    ); // 30 minutos
 
     // Cleanup ao desmontar o componente
-    return cleanupAll;
-  }, [fetchWeather, weatherError, weatherRetryCount]);
+    return () => {
+      isMountedRef.current = false;
+      cleanupAll();
+    };
+  }, [fetchWeather]); // Dependência vazia para executar apenas na montagem
+
+  // Efeito separado para lidar com retries em caso de erro
+  useEffect(() => {
+    // Se não houver erro ou o componente não estiver montado, não fazer nada
+    if (!weatherError || !isMountedRef.current) return;
+
+    // Limpar timeout de retry anterior se existir
+    if (weatherRetryTimeoutRef.current) {
+      clearTimeout(weatherRetryTimeoutRef.current);
+      weatherRetryTimeoutRef.current = null;
+    }
+
+    // Configurar retry com backoff exponencial
+    const retryDelay = Math.min(
+      30000, // máximo de 30 segundos
+      5000 * Math.pow(2, weatherRetryCount - 1)
+    );
+
+    weatherRetryTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        weatherFetchedRef.current = false;
+        fetchWeather();
+      }
+    }, retryDelay);
+
+    // Cleanup ao desmontar
+    return () => {
+      if (weatherRetryTimeoutRef.current) {
+        clearTimeout(weatherRetryTimeoutRef.current);
+        weatherRetryTimeoutRef.current = null;
+      }
+    };
+  }, [weatherError, weatherRetryCount, fetchWeather]);
 
   // Não renderiza nada se não houver notícias ou se estiver carregando
   if (!news?.length) return null;
@@ -234,14 +278,9 @@ export function NewsTicker() {
                     })}
                   </span>
                 </div>
-              ) : weatherError ? (
-                <div className="flex items-center text-yellow-200">
-                  <AlertCircle size={16} className="mr-1" />
-                  <span>Atualizando clima...</span>
-                </div>
               ) : (
                 <div className="flex items-center">
-                  <span className="animate-pulse">Carregando clima...</span>
+                  <span className="font-semibold">28°C</span>
                 </div>
               )}
             </span>

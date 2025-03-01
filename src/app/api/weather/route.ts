@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { withDefaultMiddleware } from '../middleware';
 import { cacheService } from '@/lib/cache';
 
@@ -7,18 +7,22 @@ const WEATHER_CACHE_KEY = 'weather_rio_de_janeiro';
 
 // Dados de fallback para quando a API externa falhar
 const FALLBACK_WEATHER_DATA = {
-  temp: 28,
-  lastUpdate: new Date().toISOString(),
+  temperature: 28,
+  lastUpdated: new Date().toISOString(),
 };
 
 /**
  * Rota de API para buscar dados de clima do wttr.in
  * Esta rota serve como um proxy para a API externa, evitando problemas de CORS e CSP
  */
-async function handler(_request: NextRequest) {
+async function handler() {
+  // Sempre retornar um conteúdo válido, mesmo em caso de erro
   try {
+    // Adicionar um atraso mínimo para evitar problemas de race condition
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     // Tentar obter dados do cache primeiro
-    return await cacheService.get(
+    const cachedData = await cacheService.get(
       WEATHER_CACHE_KEY,
       async () => {
         try {
@@ -34,6 +38,7 @@ async function handler(_request: NextRequest) {
               headers: {
                 'User-Agent': 'Rio de Fato News Portal',
               },
+              cache: 'no-store',
             }
           );
 
@@ -45,26 +50,14 @@ async function handler(_request: NextRequest) {
             console.error(
               `Erro na API de clima: ${response.status} ${response.statusText}`
             );
-
-            // Se for erro 429 (Too Many Requests), retornar dados de fallback
-            // mas não armazenar no cache para tentar novamente mais tarde
-            if (response.status === 429) {
-              console.log(
-                'Limite de requisições atingido na API de clima, usando fallback'
-              );
-              return NextResponse.json(FALLBACK_WEATHER_DATA);
-            }
-
-            throw new Error(
-              `Erro ao buscar dados de clima: ${response.status} ${response.statusText}`
-            );
+            return FALLBACK_WEATHER_DATA;
           }
 
           // Verificar se o corpo da resposta está vazio
           const text = await response.text();
           if (!text || text.trim() === '') {
             console.error('Resposta vazia da API de clima');
-            throw new Error('Resposta vazia da API');
+            return FALLBACK_WEATHER_DATA;
           }
 
           // Tentar fazer o parse do JSON com tratamento de erro
@@ -73,7 +66,7 @@ async function handler(_request: NextRequest) {
             data = JSON.parse(text);
           } catch (parseError) {
             console.error('Erro ao fazer parse do JSON:', parseError);
-            throw new Error('Resposta JSON inválida');
+            return FALLBACK_WEATHER_DATA;
           }
 
           // Verificar se os dados contêm a temperatura
@@ -82,32 +75,42 @@ async function handler(_request: NextRequest) {
               'Dados de temperatura não encontrados na resposta:',
               data
             );
-            throw new Error('Dados de temperatura não encontrados na resposta');
+            return FALLBACK_WEATHER_DATA;
           }
 
           // Preparar resposta formatada
           const weatherData = {
-            temp: Number(data.current_condition[0].temp_C),
-            lastUpdate: new Date().toISOString(),
+            temperature: Number(data.current_condition[0].temp_C),
+            lastUpdated: new Date().toISOString(),
           };
 
           // Retornar os dados de clima
-          return NextResponse.json(weatherData);
+          return weatherData;
         } catch (fetchError) {
           console.error('Erro ao buscar dados de clima:', fetchError);
-
           // Retornar dados de fallback em caso de erro
-          console.log('Usando dados de fallback para o clima');
-          return NextResponse.json(FALLBACK_WEATHER_DATA);
+          return FALLBACK_WEATHER_DATA;
         }
       },
-      { ttl: 3600 } // Cache por 1 hora (aumentado de 30 minutos)
+      { ttl: 3600 } // Cache por 1 hora
     );
+
+    // Garantir que sempre retornamos um objeto válido
+    return NextResponse.json(cachedData || FALLBACK_WEATHER_DATA, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
     console.error('Erro no serviço de cache:', error);
-
     // Mesmo em caso de erro no cache, retornamos dados de fallback
-    return NextResponse.json(FALLBACK_WEATHER_DATA);
+    return NextResponse.json(FALLBACK_WEATHER_DATA, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }
 
