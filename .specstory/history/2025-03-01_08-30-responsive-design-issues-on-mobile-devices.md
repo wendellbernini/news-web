@@ -2612,9 +2612,6 @@ cd /home/vboxuser/Desktop/projects/news-web && npm run build
 ```
 
 ```
-vboxuser@Xubuntu:~/Desktop/projects/news-web$ cd /home/vboxuser/Desktop/projects/news-we
-vboxuser@Xubuntu:~/Desktop/projects/news-web$ cd /home/vboxuser/Desktop/projects/news-we
-b && npm run build
 
 > news-web@0.1.0 build
 > next build
@@ -2623,6 +2620,245 @@ b && npm run build
    - Environments: .env.local, .env
 
    Creating an optimized production build ...
+ ✓ Compiled successfully
+
+./src/app/admin/api-keys/page.tsx
+44:6  Warning: React Hook useEffect has a missing dependency: 'router'. Either include i
+t or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/configuracoes/page.tsx
+88:6  Warning: React Hook useEffect has missing dependencies: 'loadConfigs' and 'router'
+. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/estatisticas/page.tsx
+38:6  Warning: React Hook useEffect has a missing dependency: 'router'. Either include i
+t or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/newsletter/page.tsx
+27:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+39:6  Warning: React Hook useEffect has a missing dependency: 'router'. Either include i
+t or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/noticias/[id]/editar/page.tsx
+12:51  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+
+./src/app/admin/noticias/page.tsx
+37:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+47:6  Warning: React Hook useEffect has missing dependencies: 'fetchNews' and 'router'. 
+Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/admin/usuarios/page.tsx
+43:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+53:6  Warning: React Hook useEffect has missing dependencies: 'fetchUsers' and 'router'.
+ Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/api/market/route.ts
+40:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+
+./src/app/registro/page.tsx
+120:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explic
+it-any
+
+./src/components/market/MarketSection.tsx
+32:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+
+./src/components/news/TrendingNews.tsx
+27:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+
+./src/components/ui/Button.tsx
+46:54  Warning: 'asChild' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/hooks/useNotifications.ts
+39:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+
+./src/hooks/useReadingList.ts
+74:6  Warning: React Hook useEffect has a missing dependency: 'fetchSavedNews'. Either i
+nclude it or remove the dependency array.  react-hooks/exhaustive-deps
+85:6  Warning: React Hook useEffect has missing dependencies: 'fetchSavedNews' and 'user
+?.id'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps 
+./src/lib/cookies.ts
+15:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+130:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explic
+it-any
+
+./src/lib/email/templates.ts
+3:9  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-
+any
+
+./src/lib/utils.ts
+38:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explici
+t-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/
+api-reference/config/eslint#disabling-rules
+ ✓ Linting and checking validity of types 
+   Collecting page data  .(node:15730) [DEP0040] DeprecationWarning: The `punycode` modu
+le is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:15729) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please u
+se a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Collecting page data    
+(node:15785) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please u
+se a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ✓ Generating static pages (47/47)
+ ✓ Collecting build traces    
+ ✓ Finalizing page optimization    
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    105 kB          389 kB
+├ ○ /_not-found                          990 B           107 kB
+├ ○ /admin                               3.64 kB         265 kB
+├ ○ /admin/api-keys                      3.68 kB         265 kB
+├ ○ /admin/configuracoes                 4.85 kB         268 kB
+├ ○ /admin/estatisticas                  4.71 kB         264 kB
+├ ○ /admin/newsletter                    3.23 kB         267 kB
+├ ○ /admin/noticias                      4.17 kB         266 kB
+├ ƒ /admin/noticias/[id]/editar          2.47 kB         284 kB
+├ ○ /admin/noticias/nova                 2.47 kB         284 kB
+├ ○ /admin/usuarios                      6.51 kB         265 kB
+├ ƒ /api/admin/newsletter                187 B           106 kB
+├ ƒ /api/auth/check-admin                187 B           106 kB
+├ ƒ /api/games                           187 B           106 kB
+├ ƒ /api/market                          187 B           106 kB
+├ ƒ /api/news                            187 B           106 kB
+├ ƒ /api/newsletter                      187 B           106 kB
+├ ƒ /api/v1/analytics/categories         187 B           106 kB
+├ ƒ /api/v1/analytics/users              187 B           106 kB
+├ ƒ /api/v1/analytics/views              187 B           106 kB
+├ ƒ /api/v1/news                         187 B           106 kB
+├ ○ /busca                               1.2 kB          285 kB
+├ ○ /categorias                          624 B           282 kB
+├ ● /categorias/[categoria]              4.5 kB          272 kB
+├   ├ /categorias/tecnologia
+├   ├ /categorias/esportes
+├   ├ /categorias/politica
+├   └ [+5 more paths]
+├ ○ /contato                             3.53 kB         121 kB
+├ ○ /faq                                 702 B           282 kB
+├ ○ /login                               3.61 kB         255 kB
+├ ○ /mais-lidas                          2.36 kB         287 kB
+├ ƒ /noticias/[slug]                     39.5 kB         321 kB
+├ ○ /perfil                              2.31 kB         284 kB
+├ ○ /perfil/biblioteca                   1.7 kB          286 kB
+├ ○ /perfil/configuracoes                1.07 kB         249 kB
+├ ○ /perfil/historico                    2.72 kB         268 kB
+├ ○ /perfil/newsletter                   6.07 kB         258 kB
+├ ○ /perfil/preferencias                 3.14 kB         259 kB
+├ ○ /privacidade                         187 B           106 kB
+├ ○ /recuperar-senha                     1.89 kB         246 kB
+├ ○ /registro                            4.95 kB         249 kB
+├ ○ /sobre                               220 B           282 kB
+└ ○ /termos                              187 B           106 kB
++ First Load JS shared by all            106 kB
+  ├ chunks/1517-25710313425abbb7.js      50.7 kB
+  ├ chunks/4bd1b696-008f57b66c6de659.js  53 kB
+  └ other shared chunks (total)          1.97 kB
+
+
+ƒ Middleware                             31.1 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+
+```
+
+---
+
+_****_
+
+
+
+Bom, o build foi concluído com sucesso! Não há erros críticos que impeçam a compilação, apenas alguns avisos (warnings) que podem ser corrigidos para melhorar a qualidade do código. Esses avisos são principalmente de duas categorias:
+
+1. **Dependências ausentes em useEffect** - O ESLint está alertando sobre hooks useEffect que não incluem todas as dependências necessárias.
+2. **Uso de `any` explícito** - Há vários lugares onde o tipo `any` está sendo usado explicitamente, o que é desencorajado pelo TypeScript.
+
+Embora esses avisos não impeçam o build, é uma boa prática corrigi-los para melhorar a qualidade e a manutenibilidade do código. Vamos começar corrigindo alguns desses problemas, começando pelos mais simples.
+
+Vamos primeiro verificar o arquivo Button.tsx que tem uma variável não utilizada:
+
+---
+
+_****_
+
+Read file: src/components/ui/Button.tsx
+
+---
+
+_****_
+
+
+
+---
+
+_**User**_
+
+Apenas execute o deploy no GitHub. Os arquivos essenciais, como .gitignore, já estão configurados, e o repositório Git já foi inicializado.
+
+---
+
+_**Assistant**_
+
+Vou executar o deploy no GitHub. Primeiro, precisamos verificar o status atual do repositório Git e depois fazer o commit e push das alterações.
+
+---
+
+_****_
+
+```bash
+cd /home/vboxuser/Desktop/projects/news-web && git status
+```
+
+```
+vboxuser@Xubuntu:~/Desktop/projects/news-web$ cd /home/vboxuser/Desktop/projects/news-we
+vboxuser@Xubuntu:~/Desktop/projects/news-web$ cd /home/vboxuser/Desktop/projects/news-we
+b && git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   .specstory/history/2025-03-01_08-30-responsive-design-issues-on-mobi
+le-devices.md
+        modified:   src/components/admin/AdminDashboard.tsx
+        modified:   src/components/admin/AdminLayout.tsx
+
+no changes added to commit (use "git add" and/or "git commit -a")
+vboxuser@Xubuntu:~/Desktop/projects/news-web$
+```
+
+---
+
+_****_
+
+
+
+Agora vou adicionar as alterações ao staging e fazer o commit:
+
+---
+
+_****_
+
+```bash
+cd /home/vboxuser/Desktop/projects/news-web && git add .
+```
+
+```
+vboxuser@Xubuntu:~/Desktop/projects/news-web$
 ```
 
 ---
