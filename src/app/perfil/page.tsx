@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { RootLayout } from '@/components/layout/RootLayout';
 import { UserProfile } from '@/components/user/UserProfile';
 import { UserComments } from '@/components/user/UserComments';
-import { UserLikedNews } from '@/components/user/UserLikedNews';
 import { SITE_NAME } from '@/lib/constants';
 
 export const metadata: Metadata = {
@@ -24,7 +23,6 @@ export default function ProfilePage() {
         <div className="grid gap-8 lg:grid-cols-[300px,1fr]">
           <UserProfile />
           <div className="space-y-8">
-            <UserLikedNews />
             <UserComments />
           </div>
         </div>

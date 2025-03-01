@@ -90,7 +90,6 @@ export type News = {
   readTime?: number;
   isBreakingNews?: boolean;
   views: number;
-  likes: number;
 };
 
 export type Comment = {

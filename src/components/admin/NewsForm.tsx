@@ -163,7 +163,6 @@ export function NewsForm({ newsId }: NewsFormProps) {
         },
         updatedAt: new Date(),
         createdAt: new Date(),
-        likes: 0,
         views: 0,
         comments: 0,
       };

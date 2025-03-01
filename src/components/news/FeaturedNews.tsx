@@ -25,7 +25,7 @@ export function FeaturedNews() {
         const newsQuery = query(
           collection(db, 'news'),
           where('published', '==', true),
-          orderBy('createdAt', 'desc'),
+          orderBy('views', 'desc'),
           limit(5)
         );
 

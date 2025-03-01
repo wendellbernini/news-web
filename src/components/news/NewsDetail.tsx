@@ -29,10 +29,10 @@ export function NewsDetail({ slug }: NewsDetailProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [historyRegistered, setHistoryRegistered] = useState(false);
-  useNewsViews(news?.id || '');
+  const newsId = news?.id;
 
-  // Usa a mesma lógica do NewsCard
-  const isSaved = news ? user?.savedNews?.includes(news.id) || false : false;
+  // Chamando o hook sem armazenar o retorno, já que o efeito colateral é o que importa
+  useNewsViews(newsId || '');
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -64,7 +64,6 @@ export function NewsDetail({ slug }: NewsDetailProps) {
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
             views: data.views || 0,
-            likes: data.likes || 0,
             readTime: calculateReadTime(data.content),
             comments: data.comments || 0,
           };
@@ -88,45 +87,22 @@ export function NewsDetail({ slug }: NewsDetailProps) {
     fetchNews();
   }, [slug]);
 
+  // Usa a mesma lógica do NewsCard
+  const isSaved = news ? user?.savedNews?.includes(news.id) || false : false;
+
   // Efeito separado para registrar o histórico
   useEffect(() => {
     const registerHistory = async () => {
       if (!news || !user || historyRegistered) {
-        console.log(
-          'NewsDetail: Condições não atendidas para registrar histórico:',
-          {
-            hasNews: !!news,
-            hasUser: !!user,
-            alreadyRegistered: historyRegistered,
-          }
-        );
         return;
       }
 
-      // Marca como registrado antes de tentar registrar para evitar chamadas duplicadas
       setHistoryRegistered(true);
 
       try {
-        console.log('NewsDetail: Iniciando registro de histórico:', {
-          newsId: news.id,
-          newsSlug: news.slug,
-          newsTitle: news.title,
-        });
-
         await addToHistory(news.id, news.slug, news.title);
-        console.log(
-          'NewsDetail: Histórico registrado com sucesso:',
-          news.title
-        );
       } catch (error) {
-        console.error('NewsDetail: Erro ao registrar histórico:', error);
-        // Só desmarca como registrado se o erro não for de "já registrado"
-        if (
-          error instanceof Error &&
-          !error.message.includes('já está no histórico')
-        ) {
-          setHistoryRegistered(false);
-        }
+        console.error('Erro ao registrar histórico:', error);
       }
     };
 

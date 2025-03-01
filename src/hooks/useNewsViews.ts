@@ -5,23 +5,31 @@ import { cacheService } from '@/lib/cache';
 
 const VIEWS_STORAGE_KEY = 'news_views';
 const VIEW_DEBOUNCE_TIME = 120000; // 2 minutos
-const BATCH_SIZE = 20; // Aumentado para reduzir número de escritas
+const BATCH_SIZE = 1; // Aumentado para reduzir número de escritas
 const VIEWS_CACHE_KEY = 'pending_views';
 
 export const useNewsViews = (newsId: string) => {
   const [hasViewed, setHasViewed] = useState(false);
 
   useEffect(() => {
-    // Verifica se a notícia já foi visualizada na sessão atual
+    console.log(`useNewsViews chamado com newsId: ${newsId}`);
+
+    if (!newsId) {
+      console.warn('newsId vazio, não incrementando visualizações.');
+      return;
+    }
+
     const checkViewed = () => {
       const viewedNews = JSON.parse(
         sessionStorage.getItem(VIEWS_STORAGE_KEY) || '[]'
       );
+      console.log(`Visualizações armazenadas: ${JSON.stringify(viewedNews)}`);
       return viewedNews.includes(newsId);
     };
 
     const incrementViews = async () => {
       if (checkViewed()) {
+        console.log(`Notícia ${newsId} já foi visualizada.`);
         setHasViewed(true);
         return;
       }
@@ -29,19 +37,19 @@ export const useNewsViews = (newsId: string) => {
       try {
         const viewKey = `news_view_${newsId}`;
 
-        // Verifica debounce usando apenas memória
         const lastView = await cacheService.get(viewKey, async () => null, {
           useMemoryOnly: true,
         });
 
         if (lastView && Date.now() - lastView < VIEW_DEBOUNCE_TIME) {
+          console.log(
+            `Visualização recente para ${newsId}, não incrementando.`
+          );
           return;
         }
 
-        // Atualiza timestamp da visualização
         await cacheService.set(viewKey, Date.now(), { useMemoryOnly: true });
 
-        // Adiciona à lista de visualizações pendentes
         const pendingViews = await cacheService.get<string[]>(
           VIEWS_CACHE_KEY,
           async () => [],
@@ -55,7 +63,10 @@ export const useNewsViews = (newsId: string) => {
           });
         }
 
-        // Processa em batch se atingiu o limite
+        console.log(
+          `Pending views antes do incremento: ${JSON.stringify(pendingViews)}`
+        );
+
         if (pendingViews.length >= BATCH_SIZE) {
           const batch = writeBatch(db);
           const uniqueViews = Array.from(new Set(pendingViews));
@@ -66,13 +77,13 @@ export const useNewsViews = (newsId: string) => {
               views: increment(1),
               lastViewed: new Date(),
             });
+            console.log(`Incrementando visualizações para ${id}.`);
           });
 
           await batch.commit();
           await cacheService.set(VIEWS_CACHE_KEY, [], { useMemoryOnly: true });
         }
 
-        // Atualiza sessão
         const viewedNews = JSON.parse(
           sessionStorage.getItem(VIEWS_STORAGE_KEY) || '[]'
         );
@@ -80,6 +91,9 @@ export const useNewsViews = (newsId: string) => {
           viewedNews.push(newsId);
           sessionStorage.setItem(VIEWS_STORAGE_KEY, JSON.stringify(viewedNews));
         }
+        console.log(
+          `Visualizações armazenadas antes de adicionar: ${JSON.stringify(viewedNews)}`
+        );
         setHasViewed(true);
       } catch (error) {
         console.error('Erro ao incrementar visualizações:', error);
