@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useNews } from '@/hooks/useNews';
 import { News } from '@/types';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/Button';
@@ -13,11 +14,11 @@ import {
   query,
   orderBy,
   getDocs,
-  deleteDoc,
-  doc,
   where,
   limit,
   startAfter,
+  QueryDocumentSnapshot,
+  DocumentData,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { formatDate } from '@/lib/utils';
@@ -28,13 +29,15 @@ const ITEMS_PER_PAGE = 10;
 export default function NewsAdminPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { deleteNews } = useNews();
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
-  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [lastVisible, setLastVisible] =
+    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
@@ -44,7 +47,7 @@ export default function NewsAdminPage() {
     }
 
     fetchNews();
-  }, [user, selectedCategory, selectedStatus]);
+  }, [user, selectedCategory, selectedStatus, router]);
 
   const fetchNews = async (isLoadMore = false) => {
     try {
@@ -99,7 +102,7 @@ export default function NewsAdminPage() {
     setDeleting(id);
 
     try {
-      await deleteDoc(doc(db, 'news', id));
+      await deleteNews(id);
       setNews((prev) => prev.filter((item) => item.id !== id));
       toast.success('Notícia excluída com sucesso!');
     } catch (error) {

@@ -60,6 +60,15 @@ npm run dev
 - `npm run start`: Inicia o servidor de produção
 - `npm run lint`: Executa o linter
 - `npm run format`: Formata o código com Prettier
+- `npm run cleanup-images`: Limpa imagens órfãs da Cloudinary
+
+## Gerenciamento de Imagens
+
+O projeto utiliza a Cloudinary para armazenar e gerenciar imagens. Quando uma notícia é excluída, a imagem associada a ela também é excluída automaticamente da Cloudinary.
+
+Para limpar imagens órfãs (que não estão associadas a nenhuma notícia), execute o comando `npm run cleanup-images`.
+
+Para mais detalhes sobre o gerenciamento de imagens, consulte a [documentação específica](docs/cloudinary-management.md).
 
 ## Estrutura do Projeto
 

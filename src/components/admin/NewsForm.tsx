@@ -12,6 +12,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { toast } from 'react-hot-toast';
 import { slugify } from '@/lib/utils';
+import { uploadImage } from '@/lib/cloudinary/client';
 
 const categories: Category[] = [
   'Tecnologia',
@@ -113,39 +114,23 @@ export function NewsForm({ newsId }: NewsFormProps) {
       let imageUrl = formData.imageUrl;
 
       if (imageFile) {
-        // Upload da imagem para o Cloudinary
-        const imageFormData = new FormData();
-        imageFormData.append('file', imageFile);
-        imageFormData.append('upload_preset', 'news-web');
+        try {
+          console.log('[Debug] Iniciando upload para o Cloudinary...');
+          const result = await uploadImage(imageFile);
 
-        console.log('[Debug] Iniciando upload para o Cloudinary...');
-        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-        const response = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          {
-            method: 'POST',
-            body: imageFormData,
+          if (!result.success) {
+            console.error('[Debug] Erro do Cloudinary:', result);
+            throw new Error('Erro ao fazer upload da imagem');
           }
-        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('[Debug] Erro do Cloudinary:', errorData);
-          throw new Error(
-            `Erro ao fazer upload da imagem: ${errorData.error?.message || response.statusText}`
-          );
+          imageUrl = result.url;
+          console.log('[Debug] Upload concluído com sucesso:', imageUrl);
+        } catch (error) {
+          console.error('[Debug] Erro ao fazer upload da imagem:', error);
+          toast.error('Erro ao fazer upload da imagem');
+          setLoading(false);
+          return;
         }
-
-        const data = await response.json();
-        console.log('Resposta do Cloudinary:', data);
-
-        if (!data.secure_url) {
-          throw new Error(
-            'URL da imagem não encontrada na resposta do Cloudinary'
-          );
-        }
-
-        imageUrl = data.secure_url;
       }
 
       const newsData = {

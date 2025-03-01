@@ -3,17 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useNews } from '@/hooks/useNews';
 import { News } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { Loader2, Plus, Pencil, Trash2 } from 'lucide-react';
-import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  deleteDoc,
-  doc,
-} from 'firebase/firestore';
+import { collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
@@ -21,6 +15,7 @@ import { toast } from 'react-hot-toast';
 export function AdminDashboard() {
   const router = useRouter();
   const { user } = useAuth();
+  const { deleteNews } = useNews();
   const [news, setNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -66,7 +61,7 @@ export function AdminDashboard() {
     setDeleting(id);
 
     try {
-      await deleteDoc(doc(db, 'news', id));
+      await deleteNews(id);
       setNews((prev) => prev.filter((item) => item.id !== id));
       toast.success('Notícia excluída com sucesso!');
     } catch (error) {

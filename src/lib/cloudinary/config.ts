@@ -35,4 +35,58 @@ export const uploadImage = async (file: File) => {
   }
 };
 
+/**
+ * Extrai o public_id de uma URL da Cloudinary
+ * @param url URL da imagem da Cloudinary
+ * @returns O public_id da imagem ou null se não for possível extrair
+ */
+export const extractPublicIdFromUrl = (url: string): string | null => {
+  if (!url || !url.includes('cloudinary.com')) {
+    return null;
+  }
+
+  // Formato típico: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/news/abcdef123456.jpg
+  const regex = /\/v\d+\/([^/]+\/[^.]+)/;
+  const match = url.match(regex);
+
+  if (match && match[1]) {
+    return match[1];
+  }
+
+  return null;
+};
+
+/**
+ * Exclui uma imagem da Cloudinary pelo seu public_id
+ * @param publicId O public_id da imagem a ser excluída
+ * @returns O resultado da operação de exclusão
+ */
+export const deleteImage = async (publicId: string) => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: 'image',
+    });
+    return result;
+  } catch (error) {
+    console.error('Erro ao excluir imagem da Cloudinary:', error);
+    throw error;
+  }
+};
+
+/**
+ * Exclui uma imagem da Cloudinary pela sua URL
+ * @param url URL da imagem da Cloudinary
+ * @returns O resultado da operação de exclusão ou null se não for possível extrair o public_id
+ */
+export const deleteImageByUrl = async (url: string) => {
+  const publicId = extractPublicIdFromUrl(url);
+
+  if (!publicId) {
+    console.warn('Não foi possível extrair o public_id da URL:', url);
+    return null;
+  }
+
+  return await deleteImage(publicId);
+};
+
 export default cloudinary;

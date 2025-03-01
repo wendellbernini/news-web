@@ -13,7 +13,12 @@
     "clean": "rm -rf .next",
     "validate-users": "ts-node scripts/validate-user-data.ts",
     "migrate-users": "ts-node scripts/migrate-remove-status.ts",
-    "check-data": "npm run validate-users && npm run migrate-users"
+    "check-data": "npm run validate-users && npm run migrate-users",
+    "cleanup-images": "ts-node src/scripts/cleanupOrphanedImages.ts",
+    "cleanup-images:force": "ts-node src/scripts/cleanupOrphanedImages.ts --force",
+    "schedule-cleanup": "ts-node src/scripts/scheduleCleanup.ts",
+    "build:scripts": "tsc --project tsconfig.scripts.json",
+    "postbuild": "npm run build:scripts"
   },
   "dependencies": {
     "@firebase/auth": "^1.5.1",
@@ -64,6 +69,7 @@
     "prettier": "^3.2.4",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "ts-node": "^10.9.2"
   }
 }

@@ -12,6 +12,20 @@ const nextConfig = {
       },
     ],
   },
+  // Configuração para lidar com módulos do Node.js no lado do cliente
+  webpack: (config, { isServer }) => {
+    // Se estiver no lado do cliente, forneça versões vazias dos módulos do Node.js
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        os: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

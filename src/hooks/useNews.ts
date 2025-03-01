@@ -22,6 +22,7 @@ import useStore from '@/store/useStore';
 import { useNotifications } from '@/hooks/useNotifications';
 import { toast } from 'react-hot-toast';
 import { cacheService } from '@/lib/cache';
+import { deleteImageByUrl } from '@/lib/cloudinary/client';
 
 const ITEMS_PER_PAGE = 10;
 const CACHE_TTL = 300; // 5 minutos
@@ -309,6 +310,15 @@ export const useNews = () => {
   const deleteNews = useCallback(
     async (id: string) => {
       try {
+        // Busca a notícia para obter a URL da imagem antes de excluí-la
+        const newsDoc = await getDoc(doc(db, 'news', id));
+        if (!newsDoc.exists()) {
+          throw new Error('Notícia não encontrada');
+        }
+
+        const newsData = newsDoc.data();
+        const imageUrl = newsData.imageUrl;
+
         // Inicia uma transação em lote
         const batch = writeBatch(db);
 
@@ -342,6 +352,30 @@ export const useNews = () => {
         affectedUserIds.forEach((userId) => {
           cacheService.remove(`notifications_${userId}`);
         });
+
+        // 7. Exclui a imagem da Cloudinary se existir
+        if (imageUrl) {
+          try {
+            console.log(
+              'Tentando excluir imagem da Cloudinary. URL:',
+              imageUrl
+            );
+
+            const result = await deleteImageByUrl(imageUrl);
+            console.log(
+              'Resultado da exclusão da imagem da Cloudinary:',
+              result
+            );
+          } catch (cloudinaryError) {
+            // Apenas registra o erro, mas não interrompe o fluxo
+            console.error(
+              'Erro ao excluir imagem da Cloudinary:',
+              cloudinaryError
+            );
+          }
+        } else {
+          console.log('Nenhuma imagem para excluir da Cloudinary');
+        }
 
         return id;
       } catch (error) {
