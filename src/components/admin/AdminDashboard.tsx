@@ -97,14 +97,16 @@ export function AdminDashboard() {
 
   return (
     <div>
-      <div className="mb-6 flex justify-end">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-xl font-semibold sm:hidden">Notícias Recentes</h2>
         <Button onClick={() => router.push('/admin/noticias/nova')}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Notícia
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-secondary-200 dark:border-secondary-800">
+      {/* Versão para desktop */}
+      <div className="hidden overflow-x-auto rounded-lg border border-secondary-200 dark:border-secondary-800 sm:block">
         <table className="min-w-full divide-y divide-secondary-200 dark:divide-secondary-800">
           <thead className="bg-secondary-50 dark:bg-secondary-900">
             <tr>
@@ -210,6 +212,67 @@ export function AdminDashboard() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Versão para mobile */}
+      <div className="space-y-4 sm:hidden">
+        {news.map((item) => (
+          <div
+            key={item.id}
+            className="rounded-lg border border-secondary-200 bg-white p-4 dark:border-secondary-800 dark:bg-secondary-950"
+          >
+            <div className="mb-2 flex items-start justify-between">
+              <div>
+                <h3 className="line-clamp-2 text-sm font-medium">
+                  {item.title}
+                </h3>
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="inline-flex rounded-full bg-primary-100 px-2 text-xs font-semibold leading-5 text-primary-800 dark:bg-primary-900 dark:text-primary-200">
+                    {item.category}
+                  </span>
+                  <span
+                    className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                      item.published
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                        : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                    }`}
+                  >
+                    {item.published ? 'Publicado' : 'Rascunho'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex space-x-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    router.push(`/admin/noticias/${item.id}/editar`)
+                  }
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(item.id)}
+                  disabled={deleting === item.id}
+                >
+                  {deleting === item.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-secondary-500 dark:text-secondary-400">
+              <div className="flex justify-between">
+                <span>{item.author?.name || 'Autor desconhecido'}</span>
+                <span>{formatDate(item.createdAt)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {news.length === 0 && (
