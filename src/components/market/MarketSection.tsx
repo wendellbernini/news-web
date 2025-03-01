@@ -81,17 +81,19 @@ const MarketSection = () => {
   const variationSign = isPositive ? '+' : '';
 
   return (
-    <div className="rounded-lg bg-gray-50 p-8">
-      <div className="mb-4 flex items-baseline gap-2">
-        <h3 className="text-sm text-gray-600">Ibovespa</h3>
-        <span className="text-lg font-bold">{formatNumber(currentValue)}</span>
-        <span className={`${variationColor} text-sm font-medium`}>
+    <div className="rounded-lg bg-gray-50 p-4 sm:p-6 md:p-8">
+      <div className="mb-3 flex items-baseline gap-2 sm:mb-4">
+        <h3 className="text-xs text-gray-600 sm:text-sm">Ibovespa</h3>
+        <span className="text-base font-bold sm:text-lg">
+          {formatNumber(currentValue)}
+        </span>
+        <span className={`${variationColor} text-xs font-medium sm:text-sm`}>
           {variationSign}
           {formatNumber(variation)}%
         </span>
       </div>
 
-      <div className="-mx-2 h-[160px]">
+      <div className="-mx-2 h-[120px] sm:h-[160px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={marketData}
@@ -120,8 +122,8 @@ const MarketSection = () => {
               domain={['auto', 'auto']}
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: '#6B7280' }}
-              width={45}
+              tick={{ fontSize: 10, fill: '#6B7280' }}
+              width={40}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area

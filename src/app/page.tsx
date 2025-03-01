@@ -25,7 +25,7 @@ export default function Home() {
 
         <div className="mt-12 border-t border-gray-200 pt-12">
           <div className="mb-8 space-y-4 md:flex md:items-center md:justify-between md:space-y-0">
-            <h2 className="text-3xl font-bold">Últimas Notícias</h2>
+            <h2 className="text-2xl font-bold sm:text-3xl">Últimas Notícias</h2>
             <div className="w-full md:w-auto">
               <CategoryFilter />
             </div>

@@ -38,16 +38,16 @@ const CATEGORIES = [
 function FeaturedNewsCard({ news }: { news: News }) {
   return (
     <Link href={`/noticias/${news.slug}`} className="group block">
-      <div className="relative mb-3 h-48 overflow-hidden rounded-lg">
+      <div className="relative mb-3 h-40 overflow-hidden rounded-lg sm:h-48">
         <Image
           src={news.imageUrl}
           alt={news.title}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, 33vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
         />
       </div>
-      <h3 className="text-xl font-bold leading-snug group-hover:text-primary-600">
+      <h3 className="text-base font-bold leading-snug group-hover:text-primary-600 sm:text-lg md:text-xl">
         {news.title}
       </h3>
     </Link>
@@ -59,18 +59,18 @@ function SmallNewsCard({ news }: { news: News }) {
   return (
     <Link
       href={`/noticias/${news.slug}`}
-      className="group flex items-start gap-4 py-3"
+      className="group flex items-start gap-3 py-3 sm:gap-4"
     >
-      <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-lg">
+      <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg sm:h-20 sm:w-28">
         <Image
           src={news.imageUrl}
           alt={news.title}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="112px"
+          sizes="(max-width: 640px) 96px, 112px"
         />
       </div>
-      <h3 className="text-sm font-bold leading-snug group-hover:text-primary-600">
+      <h3 className="line-clamp-2 text-xs font-bold leading-snug group-hover:text-primary-600 sm:text-sm">
         {news.title}
       </h3>
     </Link>
@@ -120,27 +120,27 @@ function CategoryColumn({
   }, [category]);
 
   return (
-    <div className="flex-1 px-4">
-      <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold">
-        <span className={`h-6 w-1.5 ${bgColor}`} />
+    <div className="w-full px-2 sm:px-4">
+      <h2 className="mb-4 flex items-center gap-2 text-lg font-bold sm:mb-6 sm:text-xl md:text-2xl">
+        <span className={`h-5 w-1.5 sm:h-6 ${bgColor}`} />
         <span className={textColor}>{title}</span>
       </h2>
 
       {loading ? (
-        <div className="flex h-96 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        <div className="flex h-48 items-center justify-center sm:h-96">
+          <Loader2 className="h-6 w-6 animate-spin text-primary-600 sm:h-8 sm:w-8" />
         </div>
       ) : news.length > 0 ? (
         <>
           <FeaturedNewsCard news={news[0]} />
-          <div className="mt-4 divide-y">
+          <div className="mt-3 divide-y sm:mt-4">
             {news.slice(1).map((item) => (
               <SmallNewsCard key={item.id} news={item} />
             ))}
           </div>
         </>
       ) : (
-        <div className="flex h-96 items-center justify-center text-gray-500">
+        <div className="flex h-48 items-center justify-center text-gray-500 sm:h-96">
           Nenhuma notícia encontrada
         </div>
       )}
@@ -151,9 +151,9 @@ function CategoryColumn({
 // Componente principal que renderiza o grid de categorias
 export function NewsCategoryGrid() {
   return (
-    <section className="border-t border-gray-200 py-8">
-      <div className="container mx-auto">
-        <div className="flex gap-8">
+    <section className="border-t border-gray-200 py-6 sm:py-8">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map(({ title, category, accentColor }) => (
             <CategoryColumn
               key={category}

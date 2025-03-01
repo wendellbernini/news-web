@@ -59,28 +59,28 @@ export function CategoryNewsSection({
   return (
     <section className="mt-12">
       <div className="container mx-auto px-4">
-        <h2 className="mb-6 flex items-center gap-2 text-3xl font-bold">
-          <span className={`h-7 w-1.5 ${bgColor}`} />
+        <h2 className="mb-6 flex items-center gap-2 text-xl font-bold sm:text-2xl md:text-3xl">
+          <span className={`h-6 w-1.5 sm:h-7 ${bgColor}`} />
           <span className={textColor}>{title}</span>
         </h2>
 
-        <div className="flex justify-between gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {news.map((item) => (
             <Link
               key={item.id}
               href={`/noticias/${item.slug}`}
-              className="group flex w-72 items-start gap-4"
+              className="group flex items-start gap-3"
             >
-              <div className="relative h-24 w-36 flex-shrink-0 overflow-hidden rounded-lg">
+              <div className="relative h-20 w-28 flex-shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-32">
                 <Image
                   src={item.imageUrl}
                   alt={item.title}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="144px"
+                  sizes="(max-width: 640px) 112px, (max-width: 768px) 128px, 144px"
                 />
               </div>
-              <h3 className="max-h-[60px] overflow-hidden text-base font-bold leading-snug group-hover:text-primary-600">
+              <h3 className="line-clamp-3 text-sm font-bold leading-snug group-hover:text-primary-600 sm:text-base">
                 {item.title}
               </h3>
             </Link>

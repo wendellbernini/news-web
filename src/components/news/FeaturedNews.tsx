@@ -80,26 +80,26 @@ export function FeaturedNews() {
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
                 priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 720px"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 60vw, 720px"
               />
             </div>
 
             {/* Conteúdo da notícia abaixo da imagem */}
-            <div className="mt-4 space-y-3 p-4">
-              <span className="inline-block rounded-full bg-primary-600 px-2.5 py-1 text-xs font-medium text-white">
+            <div className="mt-2 space-y-2 p-3 sm:mt-4 sm:space-y-3 sm:p-4">
+              <span className="inline-block rounded-full bg-primary-600 px-2 py-0.5 text-xs font-medium text-white sm:px-2.5 sm:py-1">
                 {currentNews.category}
               </span>
 
-              <h2 className="text-xl font-bold leading-tight sm:text-2xl lg:text-3xl">
+              <h2 className="text-lg font-bold leading-tight sm:text-xl md:text-2xl lg:text-3xl">
                 {currentNews.title}
               </h2>
 
-              <p className="line-clamp-2 text-sm text-secondary-600 sm:text-base">
+              <p className="line-clamp-2 text-xs text-secondary-600 sm:text-sm md:text-base">
                 {currentNews.summary}
               </p>
 
-              <div className="flex items-center gap-2 text-xs text-secondary-500 sm:text-sm">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-xs text-secondary-500 sm:gap-2 sm:text-sm">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Image
                     src={
                       currentNews.author.photoURL ||
@@ -108,7 +108,7 @@ export function FeaturedNews() {
                     alt={currentNews.author.name}
                     width={20}
                     height={20}
-                    className="rounded-full"
+                    className="h-4 w-4 rounded-full sm:h-5 sm:w-5"
                   />
                   <span>{currentNews.author.name}</span>
                 </div>
@@ -124,23 +124,25 @@ export function FeaturedNews() {
 
       {/* Área das notícias mais lidas - ocupa 2/5 do espaço */}
       <div className="lg:col-span-2">
-        <div className="p-6">
-          <h3 className="mb-4 text-lg font-bold">Mais Lidas</h3>
-          <div className="space-y-4">
+        <div className="p-3 sm:p-6">
+          <h3 className="mb-3 text-base font-bold sm:mb-4 sm:text-lg">
+            Mais Lidas
+          </h3>
+          <div className="space-y-3 sm:space-y-4">
             {featuredNews.map((news, index) => (
               <Link
                 key={news.id}
                 href={`/noticias/${news.slug}`}
                 className={`group block ${
                   index !== featuredNews.length - 1
-                    ? 'border-b border-secondary-200 pb-4'
+                    ? 'border-b border-secondary-200 pb-3 sm:pb-4'
                     : ''
                 }`}
               >
-                <span className="text-sm font-medium text-secondary-500">
+                <span className="text-xs font-medium text-secondary-500 sm:text-sm">
                   {news.category}
                 </span>
-                <h4 className="line-clamp-2 text-base font-semibold group-hover:text-primary-600">
+                <h4 className="line-clamp-2 text-sm font-semibold group-hover:text-primary-600 sm:text-base">
                   <span className="mr-2 text-primary-600">{index + 1}.</span>
                   {news.title}
                 </h4>
