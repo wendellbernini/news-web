@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Search, Menu, X } from 'lucide-react';
+import { Search, Menu, X, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import useStore from '@/store/useStore';
@@ -14,8 +14,7 @@ import { useRouter } from 'next/navigation';
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { user } = useStore();
-  const { signInWithGoogle } = useAuth();
+  const { user, logout, signInWithGoogle } = useAuth();
   const router = useRouter();
 
   const handleSearch = (e: React.FormEvent) => {
@@ -112,6 +111,23 @@ export function Header() {
           </form>
 
           <nav className="flex flex-col gap-2">
+            {user && (
+              <div className="mb-2 flex items-center gap-3 rounded-md bg-secondary-50 p-3 dark:bg-secondary-900">
+                <img
+                  src={user.photoURL || '/images/avatar-placeholder.png'}
+                  alt={user.name || 'Avatar'}
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+                <div className="flex flex-col">
+                  <span className="font-medium">{user.name || 'Usuário'}</span>
+                  <span className="text-xs text-secondary-600 dark:text-secondary-400">
+                    {user.email}
+                  </span>
+                </div>
+              </div>
+            )}
             <Link
               href="/categorias"
               className="rounded-md px-4 py-2 text-sm font-medium text-secondary-600 hover:bg-secondary-100 hover:text-primary-600 dark:text-secondary-400 dark:hover:bg-secondary-800"
@@ -152,6 +168,16 @@ export function Header() {
                 >
                   Configurações
                 </Link>
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="mt-2 flex w-full items-center gap-2 rounded-md bg-secondary-100 px-4 py-2 text-sm font-medium text-secondary-700 hover:bg-secondary-200 dark:bg-secondary-800 dark:text-secondary-300 dark:hover:bg-secondary-700"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair
+                </button>
               </>
             ) : (
               <>

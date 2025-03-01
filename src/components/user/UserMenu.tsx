@@ -342,6 +342,12 @@ export function UserMenu() {
                 {user.email}
               </span>
             </div>
+            {/* Versão compacta para mobile - mostra apenas o primeiro nome */}
+            <div className="flex sm:hidden">
+              <span className="text-sm font-medium">
+                {user.name?.split(' ')[0] || 'Usuário'}
+              </span>
+            </div>
             <ChevronDown className="h-4 w-4" />
           </button>
 
