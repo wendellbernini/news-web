@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { RootLayout } from '@/components/layout/RootLayout';
+import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Accordion } from '@/components/ui/Accordion';
 import { SITE_NAME, SITE_INFO } from '@/lib/constants';
 
@@ -51,7 +51,7 @@ const faqItems = [
 
 export default function FAQPage() {
   return (
-    <RootLayout>
+    <ClientLayout>
       <div className="container py-8">
         <div className="mx-auto max-w-3xl">
           <div className="mb-8 text-center">
@@ -77,6 +77,6 @@ export default function FAQPage() {
           </div>
         </div>
       </div>
-    </RootLayout>
+    </ClientLayout>
   );
 }

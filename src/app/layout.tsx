@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from 'react-hot-toast';
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants';
 import { CookieConsent } from '@/components/CookieConsent';
+import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -83,6 +84,7 @@ export default function RootLayout({
         {children}
         <Toaster position="top-right" />
         <CookieConsent />
+        <AnalyticsProvider />
       </body>
     </html>
   );
