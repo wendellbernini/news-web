@@ -58,6 +58,9 @@ export const metadata: Metadata = {
     creator: '@riodefato',
     site: '@riodefato',
   },
+  other: {
+    'facebook-domain-verification': 'k4b5hvhu5995j8h1ysrayu7mgzcvjs',
+  },
 };
 
 export default function RootLayout({
