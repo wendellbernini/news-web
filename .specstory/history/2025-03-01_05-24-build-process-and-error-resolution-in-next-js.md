@@ -609,6 +609,125 @@ Agora vamos fazer o commit das alterações:
 
 ---
 
+_****_
+
+```bash
+git commit -m "fix: corrigido erro de build removendo referência ao componente UserLikedNews e corrigindo variável não utilizada no NewsDetail"
+```
+
+```
+vboxuser@Xubuntu:~/Desktop/projects/news-web$ git commit -m "fix: corrigido erro de buil
+d removendo referência ao componente UserLikedNews e corrigindo variável não utilizada n
+vboxuser@Xubuntu:~/Desktop/projects/news-web$ git commit -m "fix: corrigido erro de buil
+d removendo referência ao componente UserLikedNews e corrigindo variável não utilizada n
+o NewsDetail"
+[main 2a04650] fix: corrigido erro de build removendo referência ao componente UserLiked
+News e corrigindo variável não utilizada no NewsDetail
+ 27 files changed, 31148 insertions(+), 125 deletions(-)
+ create mode 100644 .specstory/history/.what-is-this.md
+ create mode 100644 .specstory/history/2025-02-20_22-27-analysis-and-fix-for-library-pag
+e-layout-issue.md
+ create mode 100644 ".specstory/history/2025-02-25_11-35-an\303\241lise-do-uso-de-cachem
+etrics().md"
+ create mode 100644 ".specstory/history/2025-02-26_18-02-corre\303\247\303\243o-da-se\30
+3\247\303\243o-mais-lidas.md"
+ create mode 100644 ".specstory/history/2025-02-26_18-09-an\303\241lise-do-erro-na-se\30
+3\247\303\243o-mais-lidas.md"
+ create mode 100644 .specstory/history/2025-02-26_18-24-revert-project-to-last-deploy-st
+ate.md
+ create mode 100644 ".specstory/history/2025-02-27_07-17-an\303\241lise-t\303\251cnica-d
+o-projeto-em-andamento.md"
+ create mode 100644 ".specstory/history/2025-02-27_07-21-corre\303\247\303\243o-da-se\30
+3\247\303\243o-mais-lidas.md"
+ create mode 100644 .specstory/history/2025-02-28_06-04-verifying-project-consistency-wi
+th-last-deploy.md
+ create mode 100644 ".specstory/history/2025-02-28_07-49-corre\303\247\303\243o-do-conta
+dor-de-visualiza\303\247\303\265es-de-not\303\255cias.md"
+ create mode 100644 ".specstory/history/2025-02-28_08-52-corre\303\247\303\243o-do-siste
+ma-de-contagem-de-visualiza\303\247\303\265es.md"
+ create mode 100644 .specstory/history/2025-02-28_09-00-code-analysis-and-improvement-di
+scussion.md
+ create mode 100644 ".specstory/history/2025-02-28_12-14-problemas-no-hist\303\263rico-d
+e-not\303\255cias.md~Stashed changes"
+ create mode 100644 ".specstory/history/2025-02-28_16-16-corre\303\247\303\243o-de-erro-
+500-no-favicon.md"
+ create mode 100644 ".specstory/history/2025-02-28_16-37-problemas-na-contagem-de-visual
+iza\303\247\303\265es.md"
+ create mode 100644 .specstory/history/2025-03-01_05-10-understanding-news-view-tracking
+-system.md
+ create mode 100644 ".specstory/history/2025-03-01_05-18-corre\303\247\303\243o-da-se\30
+3\247\303\243o-mais-lidas-no-c\303\263digo.md"
+ create mode 100644 .specstory/history/2025-03-01_05-24-build-process-and-error-resoluti
+on-in-next-js.md
+ delete mode 100644 src/app/favicon.ico
+ delete mode 100644 src/components/user/UserLikedNews.tsx
+vboxuser@Xubuntu:~/Desktop/projects/news-web$
+```
+
+---
+
+_****_
+
+
+
+
+
+
+
+Agora vamos fazer o push das alterações para o GitHub:
+
+---
+
+_****_
+
+```bash
+git push origin main
+```
+
+```
+vboxuser@Xubuntu:~/Desktop/projects/news-web$ git push origin main
+Enumerating objects: 56, done.
+Counting objects: 100% (56/56), done.
+Delta compression using up to 3 threads
+Compressing objects: 100% (36/36), done.
+Writing objects: 100% (38/38), 248.80 KiB | 4.36 MiB/s, done.
+Total 38 (delta 17), reused 0 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (17/17), completed with 14 local objects.
+To github.com:wendellbernini/news-web.git
+   158bdd1..2a04650  main -> main
+vboxuser@Xubuntu:~/Desktop/projects/news-web$
+```
+
+---
+
+_****_
+
+
+
+
+
+
+
+Ótimo! O deploy no GitHub foi concluído com sucesso. Aqui está um resumo do que foi feito:
+
+1. Corrigimos dois erros que impediam o build:
+   - Removemos a referência ao componente inexistente `UserLikedNews` no arquivo `src/app/perfil/page.tsx`
+   - Corrigimos a variável não utilizada `hasViewed` no arquivo `src/components/news/NewsDetail.tsx`
+
+2. Executamos o build com sucesso, embora ainda existam alguns avisos do ESLint que não impedem a compilação.
+
+3. Adicionamos todas as alterações ao Git, fizemos o commit com uma mensagem descritiva e enviamos as alterações para o repositório remoto no GitHub.
+
+O projeto agora está atualizado no GitHub e pronto para ser implantado em um ambiente de produção. Os erros que impediam o build foram corrigidos de forma enxuta, mantendo a funcionalidade do código e seguindo as boas práticas de desenvolvimento.
+
+Se você quiser melhorar ainda mais o código, poderia considerar corrigir os avisos do ESLint em uma próxima etapa, especialmente:
+- Adicionar as dependências ausentes nos hooks useEffect
+- Substituir os tipos `any` por tipos mais específicos
+
+Mas isso não é necessário para o funcionamento básico do projeto, já que o build foi concluído com sucesso.
+
+---
+
 
 
 ---

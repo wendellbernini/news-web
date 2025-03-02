@@ -394,7 +394,34 @@ export function useReadHistory() {
 }
 ```
 
-E no `Ne
+E no `NewsDetail.tsx`, vamos modificar a chamada:
+
+```typescript:src/components/news/NewsDetail.tsx
+useEffect(() => {
+  const registerHistory = async () => {
+    if (!user?.id || !news?.id || historyRegistered) return;
+
+    await addToHistory(user.id, {
+      newsId: news.id,
+      newsTitle: news.title,
+      newsSlug: news.slug
+    });
+
+    setHistoryRegistered(true);
+  };
+
+  registerHistory();
+}, [user?.id, news, historyRegistered, addToHistory]);
+```
+
+Estas alterações garantirão que:
+
+1. Cada notícia seja registrada apenas uma vez no histórico
+2. A verificação de duplicatas seja feita antes de adicionar ao histórico
+3. O estado `historyRegistered` evite múltiplas tentativas de registro
+4. O uso de `arrayUnion` do Firestore garanta operações atômicas e seguras
+
+Você pode testar acessando a mesma notícia várias vezes - ela deve aparecer apenas uma vez no histórico.
 
 ---
 
