@@ -29,11 +29,13 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('http://localhost:3000'),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || 'https://news-web-tawny.vercel.app'
+  ),
   openGraph: {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
-    url: 'http://localhost:3000',
+    url: process.env.NEXT_PUBLIC_APP_URL || 'https://news-web-tawny.vercel.app',
     siteName: SITE_NAME,
     locale: 'pt_BR',
     type: 'website',

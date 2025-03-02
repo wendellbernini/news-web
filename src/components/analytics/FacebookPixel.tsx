@@ -53,6 +53,12 @@ export function FacebookPixel({ pixelId }: FacebookPixelProps) {
     // Verifica se o pixel já foi inicializado
     if (typeof window !== 'undefined' && !window.fbq) {
       try {
+        // Registra o domínio atual para depuração
+        const currentDomain = window.location.hostname;
+        console.log(
+          `[Facebook Pixel] Inicializando no domínio: ${currentDomain}`
+        );
+
         // Inicializa o pixel manualmente
         // @ts-ignore - Ignorando erros de TypeScript nesta função de inicialização do Facebook Pixel
         (function (f, b, e, v, n, t, s) {
@@ -155,6 +161,13 @@ export function FacebookPixel({ pixelId }: FacebookPixelProps) {
             window.trackFBEvent = function(eventName, eventParams) {
               fbq('track', eventName, eventParams);
             }
+            
+            // Diagnóstico do Facebook Pixel
+            console.log('[Facebook Pixel] Diagnóstico:');
+            console.log('- Domínio: ' + window.location.hostname);
+            console.log('- URL: ' + window.location.href);
+            console.log('- Pixel ID: ${pixelId}');
+            console.log('- Ambiente: ${process.env.NODE_ENV}');
           `,
         }}
       />

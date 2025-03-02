@@ -70,9 +70,15 @@ export function useFacebookPixel() {
     }
 
     if (typeof window !== 'undefined' && window.fbq) {
+      // Registra o domínio atual para depuração
+      const currentDomain = window.location.hostname;
+
+      // Rastreia o evento
       window.fbq('track', eventName, eventParams);
+
+      // Log com informações do domínio para depuração
       console.log(
-        `[Facebook Pixel] Evento rastreado: ${eventName}`,
+        `[Facebook Pixel] Evento rastreado: ${eventName} no domínio ${currentDomain}`,
         eventParams
       );
     } else if (!pixelWarningShown) {
