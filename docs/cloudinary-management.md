@@ -82,7 +82,7 @@ crontab -l
 Os logs da execução agendada são salvos em:
 
 ```
-/home/vboxuser/Desktop/projects/news-web/logs/cleanup.log
+/home/vboxuser/Desktop/projects/news_web_portal-noticias/logs/cleanup.log
 ```
 
 ## Monitoramento de Uso

@@ -77,7 +77,7 @@ Além disso, há scripts auxiliares:
 Antes de executar os testes, certifique-se de que o servidor está rodando:
 
 ```bash
-cd /caminho/para/news-web
+cd /caminho/para/news_web_portal-noticias
 npm run dev
 ```
 
@@ -86,7 +86,7 @@ npm run dev
 Em um terminal separado, execute:
 
 ```bash
-cd /caminho/para/news-web
+cd /caminho/para/news_web_portal-noticias
 npm run monitor-resources
 ```
 
@@ -97,7 +97,7 @@ Este script irá monitorar CPU, memória, disco e rede durante os testes. Deixe-
 Em outro terminal, execute:
 
 ```bash
-cd /caminho/para/news-web
+cd /caminho/para/news_web_portal-noticias
 npm run load-test
 ```
 
@@ -130,7 +130,7 @@ Os resultados do monitoramento de recursos serão salvos em `logs/load-tests/[da
 Para executar todos os passos de análise de uma vez (análise de texto, relatório visual e comparação), use:
 
 ```bash
-cd /caminho/para/news-web
+cd /caminho/para/news_web_portal-noticias
 npm run analyze-all logs/load-tests/[data-hora]
 ```
 
@@ -154,7 +154,7 @@ Este script interativo irá:
 Se preferir executar os passos manualmente, você pode começar com a análise detalhada:
 
 ```bash
-cd /caminho/para/news-web
+cd /caminho/para/news_web_portal-noticias
 npm run analyze-results logs/load-tests/[data-hora]
 ```
 
@@ -176,7 +176,7 @@ O relatório será salvo como `analise-detalhada.txt` no diretório de resultado
 Para gerar um relatório visual em HTML com gráficos e análises detalhadas, execute:
 
 ```bash
-cd /caminho/para/news-web
+cd /caminho/para/news_web_portal-noticias
 npm run generate-report logs/load-tests/[data-hora]
 ```
 
@@ -198,7 +198,7 @@ O relatório será salvo como `relatorio-visual.html` no diretório de resultado
 Após fazer otimizações e executar os testes novamente, você pode comparar os resultados para verificar as melhorias:
 
 ```bash
-cd /caminho/para/news-web
+cd /caminho/para/news_web_portal-noticias
 npm run compare-results logs/load-tests/[data-hora-base] logs/load-tests/[data-hora-nova]
 ```
 
