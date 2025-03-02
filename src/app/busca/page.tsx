@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, Suspense } from 'react';
+import { useEffect, useCallback, Suspense, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useNews } from '@/hooks/useNews';
 import { NewsCard } from '@/components/news/NewsCard';
@@ -16,31 +16,39 @@ function SearchResults() {
   const { news: results, loading, searchNews } = useNews();
   const { toggleSaveNews } = useReadingList();
   const { trackEvent } = useFacebookPixel();
+  const [hasSearched, setHasSearched] = useState(false);
+  const previousQueryRef = useRef(query);
 
-  // Efeito de busca memorizado
+  // Efeito de busca memorizado - sem depender do trackEvent
   const searchEffect = useCallback(() => {
     console.log('[Debug] SearchPage - Iniciando efeito de busca');
     const timeoutId = setTimeout(() => {
       searchNews(query);
-
-      // Rastrear evento de busca no Facebook Pixel
-      if (query.trim()) {
-        trackEvent('Search', {
-          search_string: query,
-          content_category: 'search',
-        });
-      }
+      setHasSearched(true);
     }, 300);
 
     return () => {
       console.log('[Debug] SearchPage - Limpando timeout anterior');
       clearTimeout(timeoutId);
     };
-  }, [query, searchNews, trackEvent]);
+  }, [query, searchNews]); // Removido trackEvent das dependências
 
+  // Efeito para executar a busca
   useEffect(() => {
     return searchEffect();
   }, [searchEffect]);
+
+  // Efeito separado para rastrear o evento de busca apenas uma vez por consulta
+  useEffect(() => {
+    // Só rastreia o evento se a busca foi realizada e a consulta é diferente da anterior
+    if (hasSearched && query.trim() && query !== previousQueryRef.current) {
+      trackEvent('Search', {
+        search_string: query,
+        content_category: 'search',
+      });
+      previousQueryRef.current = query;
+    }
+  }, [hasSearched, query, trackEvent]);
 
   const handleShare = async (news: News) => {
     if (navigator.share) {

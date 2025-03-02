@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, ensureDate } from '@/lib/utils';
 import { Loader2, Share2, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ReactMarkdown from 'react-markdown';
@@ -36,8 +36,6 @@ export function NewsDetail({ slug }: NewsDetailProps) {
 
   useEffect(() => {
     const fetchNews = async () => {
-      if (!slug) return;
-
       setLoading(true);
       setError(null);
 
@@ -57,12 +55,15 @@ export function NewsDetail({ slug }: NewsDetailProps) {
           setNews(newsData);
 
           // Rastrear evento de visualização de notícia no Facebook Pixel
-          trackEvent('ViewContent', {
-            content_name: newsData.title,
-            content_category: newsData.category,
-            content_ids: [newsData.id],
-            content_type: 'article',
-          });
+          // Apenas em produção e uma única vez por carregamento
+          if (process.env.NODE_ENV !== 'development') {
+            trackEvent('ViewContent', {
+              content_name: newsData.title,
+              content_category: newsData.category,
+              content_ids: [newsData.id],
+              content_type: 'article',
+            });
+          }
         } else {
           setError('Notícia não encontrada');
         }
@@ -75,7 +76,8 @@ export function NewsDetail({ slug }: NewsDetailProps) {
     };
 
     fetchNews();
-  }, [slug, trackEvent]);
+    // Removemos trackEvent das dependências para evitar loops
+  }, [slug]);
 
   // Usa a mesma lógica do NewsCard
   const isSaved = news ? user?.savedNews?.includes(news.id) || false : false;
@@ -200,8 +202,8 @@ export function NewsDetail({ slug }: NewsDetailProps) {
             <span>{news.author.name}</span>
           </div>
           <span>•</span>
-          <time dateTime={news.createdAt.toISOString()}>
-            {formatDate(news.createdAt)}
+          <time dateTime={ensureDate(news.createdAt).toISOString()}>
+            {formatDate(ensureDate(news.createdAt))}
           </time>
           <span>•</span>
           <span>{news.readTime || '5'} min de leitura</span>

@@ -4,9 +4,15 @@
     "plugin:@typescript-eslint/recommended",
     "prettier"
   ],
+  "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "warn",
+    "prefer-const": "error",
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      { "argsIgnorePattern": "^_" }
+    ],
     "@typescript-eslint/no-explicit-any": "warn",
     "react/display-name": "off",
     "react/no-unescaped-entities": "off",
@@ -17,6 +23,15 @@
       "files": ["src/scripts/**/*.ts"],
       "rules": {
         "@typescript-eslint/no-var-requires": "off"
+      }
+    },
+    {
+      "files": ["src/components/analytics/FacebookPixel.tsx"],
+      "rules": {
+        "prefer-spread": "off",
+        "prefer-rest-params": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/ban-ts-comment": "off"
       }
     }
   ]

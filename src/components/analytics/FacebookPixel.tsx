@@ -2,7 +2,7 @@
 
 import Script from 'next/script';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface FacebookPixelProps {
   pixelId: string;
@@ -19,23 +19,116 @@ interface FacebookPixelProps {
 export function FacebookPixel({ pixelId }: FacebookPixelProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const previousPathRef = useRef(pathname);
+
+  // Inicializa o pixel manualmente para garantir que está disponível
+  useEffect(() => {
+    // Em desenvolvimento, apenas simula a inicialização
+    if (isDevelopment) {
+      // Reduzimos a verbosidade dos logs em desenvolvimento
+      if (!isInitialized) {
+        console.log('[Facebook Pixel - DEV] Inicialização simulada');
+      }
+
+      // Define uma função fbq simulada para evitar erros, mas sem logs excessivos
+      if (typeof window !== 'undefined' && !window.fbq) {
+        window.fbq = function () {
+          // Não logamos cada chamada para evitar spam no console
+          return;
+        };
+      }
+
+      setIsInitialized(true);
+      return;
+    }
+
+    // Em produção, verifica se o ID é válido
+    if (!pixelId || !pixelId.trim()) {
+      console.warn('[Facebook Pixel] ID do pixel não configurado');
+      return;
+    }
+
+    // Verifica se o pixel já foi inicializado
+    if (typeof window !== 'undefined' && !window.fbq) {
+      try {
+        // Inicializa o pixel manualmente
+        // @ts-ignore - Ignorando erros de TypeScript nesta função de inicialização do Facebook Pixel
+        (function (f, b, e, v, n, t, s) {
+          if (f.fbq) return;
+          // @ts-ignore
+          n = f.fbq = function () {
+            // @ts-ignore
+            n.callMethod
+              ? // @ts-ignore
+                n.callMethod.apply(n, arguments)
+              : // @ts-ignore
+                n.queue.push(arguments);
+          };
+          // @ts-ignore
+          if (!f._fbq) f._fbq = n;
+          // @ts-ignore
+          n.push = n;
+          // @ts-ignore
+          n.loaded = !0;
+          // @ts-ignore
+          n.version = '2.0';
+          // @ts-ignore
+          n.queue = [];
+          // @ts-ignore
+          t = b.createElement(e);
+          // @ts-ignore
+          t.async = !0;
+          // @ts-ignore
+          t.src = v;
+          // @ts-ignore
+          s = b.getElementsByTagName(e)[0];
+          // @ts-ignore
+          s.parentNode?.insertBefore(t, s);
+        })(
+          window,
+          document,
+          'script',
+          'https://connect.facebook.net/en_US/fbevents.js'
+        );
+
+        window.fbq('init', pixelId);
+        window.fbq('track', 'PageView');
+
+        console.log('[Facebook Pixel] Inicializado com sucesso');
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('[Facebook Pixel] Erro na inicialização:', error);
+      }
+    } else if (window.fbq) {
+      setIsInitialized(true);
+    }
+  }, [pixelId, isDevelopment, isInitialized]);
 
   // Rastreia mudanças de página automaticamente
   useEffect(() => {
-    // Só executa o tracking se o pixel estiver disponível e não estiver em ambiente de desenvolvimento
+    // Evita rastreamento duplicado verificando se o caminho realmente mudou
     if (
+      isInitialized &&
       window.fbq &&
       pathname &&
-      pixelId &&
-      pixelId.trim() &&
-      process.env.NODE_ENV !== 'development'
+      !isDevelopment &&
+      previousPathRef.current !== pathname
     ) {
       window.fbq('track', 'PageView');
+      console.log(`[Facebook Pixel] Página visualizada: ${pathname}`);
+      previousPathRef.current = pathname;
     }
-  }, [pathname, searchParams, pixelId]);
+  }, [pathname, searchParams, isInitialized, isDevelopment]);
 
-  // Se não houver ID do pixel ou estiver em ambiente de desenvolvimento, não renderiza os scripts
-  if (!pixelId || !pixelId.trim() || process.env.NODE_ENV === 'development') {
+  // Se estiver em ambiente de desenvolvimento, não renderiza os scripts
+  if (isDevelopment) {
+    return null;
+  }
+
+  // Se não houver ID do pixel, não renderiza os scripts
+  if (!pixelId || !pixelId.trim()) {
     return null;
   }
 
@@ -86,5 +179,6 @@ declare global {
     fbq: any;
     trackFBEvent: (eventName: string, eventParams?: any) => void;
     trackGAEvent: (eventName: string, eventParams?: any) => void;
+    _fbq: any;
   }
 }
