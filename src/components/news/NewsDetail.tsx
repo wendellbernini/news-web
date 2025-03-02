@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { News } from '@/types';
-import { formatDate, calculateReadTime } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 import { Loader2, Share2, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import ReactMarkdown from 'react-markdown';
@@ -15,6 +15,7 @@ import { useReadHistory } from '@/hooks/useReadHistory';
 import useStore from '@/store/useStore';
 import { useReadingList } from '@/hooks/useReadingList';
 import { useNewsViews } from '@/hooks/useNewsViews';
+import { useFacebookPixel } from '@/hooks/useFacebookPixel';
 
 interface NewsDetailProps {
   slug: string;
@@ -31,6 +32,7 @@ export function NewsDetail({ slug }: NewsDetailProps) {
   const [historyRegistered, setHistoryRegistered] = useState(false);
   const newsId = news?.id;
   useNewsViews(newsId || '');
+  const { trackEvent } = useFacebookPixel();
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -48,42 +50,32 @@ export function NewsDetail({ slug }: NewsDetailProps) {
 
         if (!snapshot.empty) {
           const newsDoc = snapshot.docs[0];
-          const data = newsDoc.data();
-          const newsData: News = {
+          const newsData = {
             id: newsDoc.id,
-            title: data.title,
-            slug: data.slug,
-            content: data.content,
-            summary: data.summary,
-            imageUrl: data.imageUrl,
-            category: data.category,
-            author: data.author,
-            published: data.published,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
-            views: data.views || 0,
-            readTime: calculateReadTime(data.content),
-            comments: data.comments || 0,
-          };
-
+            ...newsDoc.data(),
+          } as News;
           setNews(newsData);
+
+          // Rastrear evento de visualização de notícia no Facebook Pixel
+          trackEvent('ViewContent', {
+            content_name: newsData.title,
+            content_category: newsData.category,
+            content_ids: [newsData.id],
+            content_type: 'article',
+          });
         } else {
           setError('Notícia não encontrada');
-          toast.error('Notícia não encontrada');
         }
-      } catch (err) {
-        console.error('Erro ao buscar notícia:', err);
-        setError(
-          'Erro ao carregar a notícia. Por favor, tente novamente mais tarde.'
-        );
-        toast.error('Erro ao carregar a notícia');
+      } catch (error) {
+        console.error('Erro ao buscar notícia:', error);
+        setError('Erro ao carregar a notícia');
       } finally {
         setLoading(false);
       }
     };
 
     fetchNews();
-  }, [slug]);
+  }, [slug, trackEvent]);
 
   // Usa a mesma lógica do NewsCard
   const isSaved = news ? user?.savedNews?.includes(news.id) || false : false;
@@ -133,10 +125,16 @@ export function NewsDetail({ slug }: NewsDetailProps) {
       return;
     }
 
-    if (!news) return;
-
     try {
       await toggleSaveNews(news.id);
+
+      // Rastrear evento de salvar notícia no Facebook Pixel
+      trackEvent('AddToWishlist', {
+        content_name: news.title,
+        content_category: news.category,
+        content_ids: [news.id],
+        content_type: 'article',
+      });
     } catch (error) {
       console.error('Erro ao salvar/remover notícia:', error);
       toast.error('Erro ao salvar/remover notícia');
@@ -151,6 +149,14 @@ export function NewsDetail({ slug }: NewsDetailProps) {
           text: news.summary,
           url: window.location.href,
         });
+
+        // Rastrear evento de compartilhamento no Facebook Pixel
+        trackEvent('Share', {
+          content_name: news.title,
+          content_category: news.category,
+          content_ids: [news.id],
+          content_type: 'article',
+        });
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           console.error('Erro ao compartilhar:', error);
@@ -160,6 +166,15 @@ export function NewsDetail({ slug }: NewsDetailProps) {
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success('Link copiado para a área de transferência!');
+
+      // Rastrear evento de cópia de link no Facebook Pixel
+      trackEvent('Share', {
+        content_name: news.title,
+        content_category: news.category,
+        content_ids: [news.id],
+        content_type: 'article',
+        method: 'copy_link',
+      });
     }
   };
 

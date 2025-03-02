@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -11,8 +11,11 @@ import {
 import { auth } from '@/lib/firebase/config';
 import useStore from '@/store/useStore';
 import type { Category } from '@/types';
+import { useFacebookPixel } from '@/hooks/useFacebookPixel';
+import { Loader2 } from 'lucide-react';
 
-export default function RegisterPage() {
+// Componente interno que usa o hook useFacebookPixel
+function RegisterForm() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,6 +23,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const setUser = useStore((state) => state.setUser);
+  const { trackEvent } = useFacebookPixel();
 
   const handleGoogleSignup = async () => {
     setError('');
@@ -55,6 +59,13 @@ export default function RegisterPage() {
           breakingNews: true,
           newArticles: true,
         },
+      });
+
+      // Rastrear evento de registro com Google no Facebook Pixel
+      trackEvent('CompleteRegistration', {
+        content_name: 'registro',
+        status: 'success',
+        method: 'google',
       });
 
       router.push('/');
@@ -114,6 +125,13 @@ export default function RegisterPage() {
           breakingNews: true,
           newArticles: true,
         },
+      });
+
+      // Rastrear evento de registro com email/senha no Facebook Pixel
+      trackEvent('CompleteRegistration', {
+        content_name: 'registro',
+        status: 'success',
+        method: 'email',
       });
 
       router.push('/');
@@ -238,5 +256,20 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// Componente principal que envolve o formulário com Suspense
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

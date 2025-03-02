@@ -14,6 +14,7 @@ O Rio de Fato é um portal de notícias moderno e dinâmico desenvolvido com Nex
 - Armazenamento: Cloudinary para imagens
 - Estado: Zustand para gerenciamento global
 - Autenticação: Firebase Auth (Google e Email/Senha)
+- Analytics: Google Analytics 4, Firebase Analytics e Facebook Pixel
 
 ## Funcionalidades
 
@@ -102,3 +103,24 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE.md](LICENSE.md) p
 - Email: contato@riodefato.com.br
 - Website: https://riodefato.com.br
 - Twitter: [@riodefato](https://twitter.com/riodefato)
+
+## Ferramentas de Análise
+
+O projeto utiliza três ferramentas de análise para rastrear o comportamento dos usuários e medir o desempenho do site:
+
+### Google Analytics 4
+
+Implementado para rastrear visualizações de página, eventos personalizados e métricas de engajamento. Configurado para funcionar com o Next.js e respeitar as políticas de privacidade.
+
+### Firebase Analytics
+
+Integrado diretamente com o Firebase, permite rastrear eventos personalizados e visualizações de página, além de se integrar com outras ferramentas do Firebase.
+
+### Facebook Pixel
+
+Implementado para rastrear conversões, criar públicos personalizados e otimizar campanhas de anúncios no Facebook e Instagram. Eventos personalizados foram configurados para rastrear ações importantes como visualização de notícias, compartilhamentos e registros.
+
+Para mais detalhes sobre as ferramentas de análise, consulte:
+
+- [Guia do Facebook Pixel](docs/FACEBOOK_PIXEL_GUIDE.md)
+- [Configuração de Analytics](ANALYTICS_SETUP.md)
