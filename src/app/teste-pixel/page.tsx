@@ -12,7 +12,11 @@ function PixelTester() {
   const [eventLog, setEventLog] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const logEvent = (eventName: string, params: any, success: boolean = true) => {
+  const logEvent = (
+    eventName: string,
+    params: any,
+    success: boolean = true
+  ) => {
     const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
     const status = success ? '✅' : '❌';
     setEventLog((prev) => [
@@ -36,34 +40,39 @@ function PixelTester() {
     }
   };
 
-  const handleTestPageView = () => handleTestEvent('PageView', {
-    page_title: 'Página de Teste',
-    page_location: window.location.href,
-  });
+  const handleTestPageView = () =>
+    handleTestEvent('PageView', {
+      page_title: 'Página de Teste',
+      page_location: window.location.href,
+    });
 
-  const handleTestViewContent = () => handleTestEvent('ViewContent', {
-    content_name: 'Artigo de Teste',
-    content_category: 'Tecnologia',
-    content_ids: ['test-123'],
-    content_type: 'article',
-  });
+  const handleTestViewContent = () =>
+    handleTestEvent('ViewContent', {
+      content_name: 'Artigo de Teste',
+      content_category: 'Tecnologia',
+      content_ids: ['test-123'],
+      content_type: 'article',
+    });
 
-  const handleTestSearch = () => handleTestEvent('Search', {
-    search_string: 'teste de busca',
-    content_category: 'search',
-  });
+  const handleTestSearch = () =>
+    handleTestEvent('Search', {
+      search_string: 'teste de busca',
+      content_category: 'search',
+    });
 
-  const handleTestLead = () => handleTestEvent('Lead', {
-    content_name: 'Newsletter',
-    content_category: 'signup',
-    status: true,
-  });
+  const handleTestLead = () =>
+    handleTestEvent('Lead', {
+      content_name: 'Newsletter',
+      content_category: 'signup',
+      status: true,
+    });
 
-  const handleTestCustomEvent = () => handleTestEvent('CustomEvent', {
-    event_label: 'Teste API de Conversões',
-    event_category: 'Test',
-    value: 1,
-  });
+  const handleTestCustomEvent = () =>
+    handleTestEvent('CustomEvent', {
+      event_label: 'Teste API de Conversões',
+      event_category: 'Test',
+      value: 1,
+    });
 
   const handleClearLog = () => {
     setEventLog([]);
@@ -75,7 +84,8 @@ function PixelTester() {
         <h2 className="text-xl font-semibold">Status da Configuração</h2>
         <div className="rounded-md bg-gray-100 p-4 dark:bg-gray-800">
           <p>
-            <strong>Pixel ID:</strong> {process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
+            <strong>Pixel ID:</strong>{' '}
+            {process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
           </p>
           <p>
             <strong>API de Conversões:</strong>{' '}
@@ -93,45 +103,30 @@ function PixelTester() {
       </div>
 
       <p className="mb-4">
-        Esta página permite testar se o Facebook Pixel e a API de Conversões estão
-        funcionando corretamente. Clique nos botões abaixo para disparar
+        Esta página permite testar se o Facebook Pixel e a API de Conversões
+        estão funcionando corretamente. Clique nos botões abaixo para disparar
         diferentes tipos de eventos e verifique no console do navegador e no
         Facebook Business Manager se eles estão sendo registrados.
       </p>
 
       <div className="mb-8 flex flex-wrap gap-4">
-        <Button
-          onClick={handleTestPageView}
-          disabled={isLoading}
-        >
+        <Button onClick={handleTestPageView} disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Testar PageView
         </Button>
-        <Button
-          onClick={handleTestViewContent}
-          disabled={isLoading}
-        >
+        <Button onClick={handleTestViewContent} disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Testar ViewContent
         </Button>
-        <Button
-          onClick={handleTestSearch}
-          disabled={isLoading}
-        >
+        <Button onClick={handleTestSearch} disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Testar Search
         </Button>
-        <Button
-          onClick={handleTestLead}
-          disabled={isLoading}
-        >
+        <Button onClick={handleTestLead} disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Testar Lead
         </Button>
-        <Button
-          onClick={handleTestCustomEvent}
-          disabled={isLoading}
-        >
+        <Button onClick={handleTestCustomEvent} disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Testar Evento Personalizado
         </Button>
@@ -168,7 +163,7 @@ function PixelTester() {
         <h3 className="mb-2 font-semibold">Instruções para verificação:</h3>
         <ol className="list-inside list-decimal space-y-2">
           <li>
-            Abra o console do navegador (F12 > Console) para ver os logs do
+            Abra o console do navegador (F12 {'>'} Console) para ver os logs do
             Facebook Pixel e da API de Conversões
           </li>
           <li>
