@@ -143,8 +143,8 @@ export function NewsForm({ newsId }: NewsFormProps) {
         imageUrl,
         author: {
           id: user.id,
-          name: user.name || 'Usuário Anônimo',
-          photoURL: user.photoURL || '/images/avatar-placeholder.png',
+          name: 'Redação Rio de Fato',
+          photoURL: '/images/redacao-avatar.svg',
         },
         updatedAt: new Date(),
         createdAt: new Date(),
