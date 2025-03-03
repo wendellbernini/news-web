@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     site: '@riodefato',
   },
   other: {
-    'facebook-domain-verification': 'k4b5hvhu5995j8h1ysrayu7mgzcvjs',
+    'facebook-domain-verification': 'o7yf1k9oo8p1ucirbvjoqmgo6n6ru9',
   },
 };
 
