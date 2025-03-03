@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
@@ -12,10 +12,8 @@ import { usePathname, useSearchParams } from 'next/navigation';
 export function useFacebookPixel() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [pixelWarningShown, setPixelWarningShown] = useState(false);
   const isDevelopment = process.env.NODE_ENV === 'development';
   const previousPathRef = useRef(pathname);
-  const eventLogCountRef = useRef<Record<string, number>>({});
 
   // Rastreia mudanças de página automaticamente (complementar ao que já existe no FacebookPixel.tsx)
   useEffect(() => {
@@ -39,54 +37,38 @@ export function useFacebookPixel() {
    * @param eventParams Parâmetros adicionais do evento
    * @param forceLog Se true, sempre mostra o log mesmo em desenvolvimento
    */
-  const trackEvent = (
+  const trackEvent = async (
     eventName: string,
     eventParams = {},
     forceLog = false
   ) => {
-    // Em ambiente de desenvolvimento, não tenta rastrear eventos reais
-    if (isDevelopment) {
-      // Limita o número de logs para cada tipo de evento para evitar spam
-      const eventKey = `${eventName}-${JSON.stringify(eventParams)}`;
-      const logCount = eventLogCountRef.current[eventKey] || 0;
-
-      // Só loga a primeira vez ou a cada 10 chamadas
-      if (logCount === 0 || forceLog) {
-        console.log(
-          `[Facebook Pixel - DEV] Evento simulado: ${eventName}`,
-          eventParams
-        );
-        eventLogCountRef.current[eventKey] = logCount + 1;
-      } else {
-        eventLogCountRef.current[eventKey] = logCount + 1;
-        // A cada 10 chamadas, mostra um log de resumo
-        if (logCount % 10 === 0) {
-          console.log(
-            `[Facebook Pixel - DEV] Evento ${eventName} chamado ${logCount} vezes (logs suprimidos para evitar spam)`
-          );
-        }
-      }
-      return;
+    // Rastreia com o Pixel do Facebook (cliente)
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', eventName, eventParams);
     }
 
-    if (typeof window !== 'undefined' && window.fbq) {
-      // Registra o domínio atual para depuração
-      const currentDomain = window.location.hostname;
+    // Rastreia com a API de Conversões (servidor)
+    try {
+      const response = await fetch('/api/facebook/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          event_name: eventName,
+          custom_data: eventParams,
+        }),
+      });
 
-      // Rastreia o evento
-      window.fbq('track', eventName, eventParams);
+      if (!response.ok) {
+        throw new Error('Falha ao enviar evento para a API de Conversões');
+      }
 
-      // Log com informações do domínio para depuração
-      console.log(
-        `[Facebook Pixel] Evento rastreado: ${eventName} no domínio ${currentDomain}`,
-        eventParams
-      );
-    } else if (!pixelWarningShown) {
-      // Mostra o aviso apenas uma vez para evitar spam no console
-      console.warn(
-        '[Facebook Pixel] Não foi possível rastrear o evento: Pixel não inicializado'
-      );
-      setPixelWarningShown(true);
+      if (isDevelopment || forceLog) {
+        console.log('[Facebook CAPI] Evento enviado:', eventName, eventParams);
+      }
+    } catch (error) {
+      console.error('[Facebook CAPI] Erro ao enviar evento:', error);
     }
   };
 
