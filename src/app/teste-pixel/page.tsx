@@ -10,60 +10,60 @@ import { Loader2 } from 'lucide-react';
 function PixelTester() {
   const { trackEvent } = useFacebookPixel();
   const [eventLog, setEventLog] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const logEvent = (eventName: string, params: any) => {
+  const logEvent = (eventName: string, params: any, success: boolean = true) => {
     const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+    const status = success ? '✅' : '❌';
     setEventLog((prev) => [
-      `[${timestamp}] Evento: ${eventName} - Parâmetros: ${JSON.stringify(
+      `[${timestamp}] ${status} Evento: ${eventName} - Parâmetros: ${JSON.stringify(
         params
       )}`,
       ...prev,
     ]);
   };
 
-  const handleTestPageView = () => {
-    trackEvent('PageView', {}, true);
-    logEvent('PageView', {});
+  const handleTestEvent = async (eventName: string, params = {}) => {
+    setIsLoading(true);
+    try {
+      await trackEvent(eventName, params, true);
+      logEvent(eventName, params, true);
+    } catch (error) {
+      console.error('Erro ao enviar evento:', error);
+      logEvent(eventName, params, false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleTestViewContent = () => {
-    const params = {
-      content_name: 'Artigo de Teste',
-      content_category: 'Tecnologia',
-      content_ids: ['test-123'],
-      content_type: 'article',
-    };
-    trackEvent('ViewContent', params, true);
-    logEvent('ViewContent', params);
-  };
+  const handleTestPageView = () => handleTestEvent('PageView', {
+    page_title: 'Página de Teste',
+    page_location: window.location.href,
+  });
 
-  const handleTestSearch = () => {
-    const params = {
-      search_string: 'teste de busca',
-      content_category: 'search',
-    };
-    trackEvent('Search', params, true);
-    logEvent('Search', params);
-  };
+  const handleTestViewContent = () => handleTestEvent('ViewContent', {
+    content_name: 'Artigo de Teste',
+    content_category: 'Tecnologia',
+    content_ids: ['test-123'],
+    content_type: 'article',
+  });
 
-  const handleTestLead = () => {
-    const params = {
-      content_name: 'Formulário de Contato',
-      content_category: 'Contato',
-    };
-    trackEvent('Lead', params, true);
-    logEvent('Lead', params);
-  };
+  const handleTestSearch = () => handleTestEvent('Search', {
+    search_string: 'teste de busca',
+    content_category: 'search',
+  });
 
-  const handleTestCustomEvent = () => {
-    const params = {
-      event_label: 'Teste Personalizado',
-      event_category: 'Teste',
-      value: 1,
-    };
-    trackEvent('CustomEvent', params, true);
-    logEvent('CustomEvent', params);
-  };
+  const handleTestLead = () => handleTestEvent('Lead', {
+    content_name: 'Newsletter',
+    content_category: 'signup',
+    status: true,
+  });
+
+  const handleTestCustomEvent = () => handleTestEvent('CustomEvent', {
+    event_label: 'Teste API de Conversões',
+    event_category: 'Test',
+    value: 1,
+  });
 
   const handleClearLog = () => {
     setEventLog([]);
@@ -71,19 +71,68 @@ function PixelTester() {
 
   return (
     <div className="mb-8">
+      <div className="mb-4 space-y-2">
+        <h2 className="text-xl font-semibold">Status da Configuração</h2>
+        <div className="rounded-md bg-gray-100 p-4 dark:bg-gray-800">
+          <p>
+            <strong>Pixel ID:</strong> {process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
+          </p>
+          <p>
+            <strong>API de Conversões:</strong>{' '}
+            {process.env.FACEBOOK_CONVERSIONS_API_ACCESS_TOKEN
+              ? '✅ Configurada'
+              : '❌ Não configurada'}
+          </p>
+          <p>
+            <strong>Ambiente:</strong> {process.env.NODE_ENV}
+          </p>
+          <p>
+            <strong>URL Base:</strong> {process.env.NEXT_PUBLIC_APP_URL}
+          </p>
+        </div>
+      </div>
+
       <p className="mb-4">
-        Esta página permite testar se o Facebook Pixel está funcionando
-        corretamente. Clique nos botões abaixo para disparar diferentes tipos de
-        eventos e verifique no console do navegador e no Facebook Business
-        Manager se eles estão sendo registrados.
+        Esta página permite testar se o Facebook Pixel e a API de Conversões estão
+        funcionando corretamente. Clique nos botões abaixo para disparar
+        diferentes tipos de eventos e verifique no console do navegador e no
+        Facebook Business Manager se eles estão sendo registrados.
       </p>
 
       <div className="mb-8 flex flex-wrap gap-4">
-        <Button onClick={handleTestPageView}>Testar PageView</Button>
-        <Button onClick={handleTestViewContent}>Testar ViewContent</Button>
-        <Button onClick={handleTestSearch}>Testar Search</Button>
-        <Button onClick={handleTestLead}>Testar Lead</Button>
-        <Button onClick={handleTestCustomEvent}>
+        <Button
+          onClick={handleTestPageView}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Testar PageView
+        </Button>
+        <Button
+          onClick={handleTestViewContent}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Testar ViewContent
+        </Button>
+        <Button
+          onClick={handleTestSearch}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Testar Search
+        </Button>
+        <Button
+          onClick={handleTestLead}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Testar Lead
+        </Button>
+        <Button
+          onClick={handleTestCustomEvent}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Testar Evento Personalizado
         </Button>
       </div>
@@ -114,6 +163,44 @@ function PixelTester() {
           )}
         </div>
       </div>
+
+      <div className="mt-8 rounded-md bg-yellow-50 p-4 dark:bg-yellow-900">
+        <h3 className="mb-2 font-semibold">Instruções para verificação:</h3>
+        <ol className="list-inside list-decimal space-y-2">
+          <li>
+            Abra o console do navegador (F12 > Console) para ver os logs do
+            Facebook Pixel e da API de Conversões
+          </li>
+          <li>
+            Verifique se aparecem mensagens com os prefixos [Facebook Pixel] e
+            [Facebook CAPI]
+          </li>
+          <li>
+            Acesse o{' '}
+            <a
+              href="https://business.facebook.com/events_manager"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline dark:text-blue-400"
+            >
+              Facebook Events Manager
+            </a>{' '}
+            para verificar se os eventos estão sendo recebidos
+          </li>
+          <li>
+            Use a extensão{' '}
+            <a
+              href="https://chrome.google.com/webstore/detail/facebook-pixel-helper/fdgfkebogiimcoedlicjlajpkdmockpc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline dark:text-blue-400"
+            >
+              Facebook Pixel Helper
+            </a>{' '}
+            para depuração avançada
+          </li>
+        </ol>
+      </div>
     </div>
   );
 }
@@ -122,7 +209,9 @@ export default function TestePixelPage() {
   return (
     <RootLayout>
       <main className="container py-8">
-        <h1 className="mb-8 text-2xl font-bold">Teste do Facebook Pixel</h1>
+        <h1 className="mb-8 text-2xl font-bold">
+          Teste do Facebook Pixel e API de Conversões
+        </h1>
 
         <Suspense
           fallback={
@@ -134,43 +223,6 @@ export default function TestePixelPage() {
         >
           <PixelTester />
         </Suspense>
-
-        <div className="mt-8 rounded-md bg-yellow-50 p-4 dark:bg-yellow-900">
-          <h3 className="mb-2 font-semibold">Instruções para verificação:</h3>
-          <ol className="list-inside list-decimal space-y-2">
-            <li>
-              Abra o console do navegador (F12 &gt; Console) para ver os logs do
-              Facebook Pixel
-            </li>
-            <li>
-              Verifique se aparecem mensagens com o prefixo [Facebook Pixel]
-            </li>
-            <li>
-              Acesse o{' '}
-              <a
-                href="https://business.facebook.com/events_manager"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline dark:text-blue-400"
-              >
-                Facebook Events Manager
-              </a>{' '}
-              para verificar se os eventos estão sendo recebidos
-            </li>
-            <li>
-              Use a extensão{' '}
-              <a
-                href="https://chrome.google.com/webstore/detail/facebook-pixel-helper/fdgfkebogiimcoedlicjlajpkdmockpc"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline dark:text-blue-400"
-              >
-                Facebook Pixel Helper
-              </a>{' '}
-              para depuração avançada
-            </li>
-          </ol>
-        </div>
       </main>
     </RootLayout>
   );
