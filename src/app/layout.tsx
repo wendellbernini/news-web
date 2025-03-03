@@ -30,12 +30,15 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || 'https://news-web-tawny.vercel.app'
+    process.env.NEXT_PUBLIC_APP_URL ||
+      'https://news-web-portal-noticias.vercel.app/'
   ),
   openGraph: {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
-    url: process.env.NEXT_PUBLIC_APP_URL || 'https://news-web-tawny.vercel.app',
+    url:
+      process.env.NEXT_PUBLIC_APP_URL ||
+      'https://news-web-portal-noticias.vercel.app/',
     siteName: SITE_NAME,
     locale: 'pt_BR',
     type: 'website',
@@ -57,6 +60,9 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     creator: '@riodefato',
     site: '@riodefato',
+  },
+  other: {
+    'facebook-domain-verification': '0xflhjlqak9es24fpr00vk36zr80bp',
   },
 };
 
