@@ -29,6 +29,15 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL ||
       'https://news-web-portal-noticias.vercel.app/'
   ),
+  icons: {
+    icon: '/RF.ico',
+    shortcut: '/RF.ico',
+    apple: '/RF.ico',
+    other: {
+      rel: 'apple-touch-icon-precomposed',
+      url: '/RF.ico',
+    },
+  },
   openGraph: {
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
@@ -72,7 +81,8 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/RF.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="/RF.ico" type="image/x-icon" />
         <meta
           name="facebook-domain-verification"
           content="0xflhjlqak9es24fpr00vk36zr80bp"
