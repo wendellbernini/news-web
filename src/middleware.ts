@@ -37,7 +37,9 @@ export async function middleware(request: NextRequest) {
 
   const token = request.cookies.get('firebase-token');
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+  const isAdminRoute =
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname === '/teste-pixel';
   const isProfileRoute = request.nextUrl.pathname.startsWith('/perfil');
 
   // Se não houver token e for uma rota protegida, redireciona para o login

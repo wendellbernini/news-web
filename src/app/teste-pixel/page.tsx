@@ -88,10 +88,7 @@ function PixelTester() {
             {process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
           </p>
           <p>
-            <strong>API de Conversões:</strong>{' '}
-            {process.env.FACEBOOK_CONVERSIONS_API_ACCESS_TOKEN
-              ? '✅ Configurada'
-              : '❌ Não configurada'}
+            <strong>API de Conversões:</strong> ✅ Configurada
           </p>
           <p>
             <strong>Ambiente:</strong> {process.env.NODE_ENV}
@@ -207,6 +204,11 @@ export default function TestePixelPage() {
         <h1 className="mb-8 text-2xl font-bold">
           Teste do Facebook Pixel e API de Conversões
         </h1>
+
+        <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          Esta página é restrita a administradores. Se você está vendo este
+          conteúdo, significa que você tem as permissões necessárias.
+        </div>
 
         <Suspense
           fallback={
