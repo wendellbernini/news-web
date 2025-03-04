@@ -3,7 +3,7 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { slugify } from '@/lib/utils';
 
-// Chave de API para autenticação do n8n
+// Chave de API para autenticação do n8n (configurada no Vercel)
 const API_KEY = process.env.NEWS_API_KEY;
 
 // Configuração de CORS
