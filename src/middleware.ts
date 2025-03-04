@@ -85,3 +85,33 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
+
+export function middlewareCors(request: NextRequest) {
+  // Define os headers CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-api-key',
+  };
+
+  // Se for uma requisição OPTIONS, retorna os headers CORS
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 200,
+      headers,
+    });
+  }
+
+  // Para outras requisições, adiciona os headers CORS à resposta
+  const response = NextResponse.next();
+  Object.entries(headers).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  return response;
+}
+
+// Configura o middleware para rodar apenas nas rotas da API
+export const configCors = {
+  matcher: '/api/:path*',
+};

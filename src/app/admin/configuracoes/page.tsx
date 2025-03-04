@@ -239,11 +239,15 @@ export default function SettingsAdminPage() {
                   URL do Logo
                 </label>
                 <Input
+                  id="logoUrl"
+                  name="logoUrl"
+                  type="url"
+                  placeholder="https://res.cloudinary.com/seu-cloud-name/image/upload/v1/logo.png"
                   value={siteConfig.logo}
                   onChange={(e) =>
                     setSiteConfig((prev) => ({ ...prev, logo: e.target.value }))
                   }
-                  placeholder="https://exemplo.com/logo.png"
+                  className="w-full"
                 />
               </div>
               <div>
@@ -408,7 +412,10 @@ export default function SettingsAdminPage() {
                   Email do Remetente
                 </label>
                 <Input
+                  id="senderEmail"
+                  name="senderEmail"
                   type="email"
+                  placeholder="noticias@riodefato.com.br"
                   value={emailConfig.senderEmail}
                   onChange={(e) =>
                     setEmailConfig((prev) => ({
@@ -416,7 +423,7 @@ export default function SettingsAdminPage() {
                       senderEmail: e.target.value,
                     }))
                   }
-                  placeholder="noticias@exemplo.com"
+                  className="w-full"
                 />
               </div>
               <div>
@@ -424,6 +431,10 @@ export default function SettingsAdminPage() {
                   Servidor SMTP
                 </label>
                 <Input
+                  id="smtpHost"
+                  name="smtpHost"
+                  type="text"
+                  placeholder="smtp.riodefato.com.br"
                   value={emailConfig.smtpHost}
                   onChange={(e) =>
                     setEmailConfig((prev) => ({
@@ -431,7 +442,7 @@ export default function SettingsAdminPage() {
                       smtpHost: e.target.value,
                     }))
                   }
-                  placeholder="smtp.exemplo.com"
+                  className="w-full"
                 />
               </div>
               <div>
